@@ -10,4 +10,3 @@ CSE-325 Team 5
 5:
 6:
 
-git@github.com-ethem:Ethem-Deli/Team-Horizon
