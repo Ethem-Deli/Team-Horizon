@@ -4,7 +4,7 @@ CSE-325 Team 5
 
 
 1:Ethem Deli
-2:
+2:Tafadzwa Chingore
 3:
 4:
 5:
