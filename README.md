@@ -7,5 +7,6 @@ CSE-325 Team 5
 3: Andrew Halisky
 4: Mickael Randriamihaja 
 5: Tafadzwa Chingore
+6: Dominic Abah
 
 this is the end of the line---
