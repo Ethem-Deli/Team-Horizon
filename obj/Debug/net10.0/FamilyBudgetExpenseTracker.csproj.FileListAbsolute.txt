@@ -140,7 +140,6 @@
 /Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/scopedcss/bundle/FamilyBudgetExpenseTracker.styles.css
 /Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/scopedcss/projectbundle/FamilyBudgetExpenseTracker.bundle.scp.css
 /Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/compressed/ke1m4aetnz-{0}-w7mf952350-w7mf952350.gz
-/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/compressed/l68hx24phw-{0}-vm8t44s5f6-vm8t44s5f6.gz
 /Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/compressed/g61de08dg6-{0}-bqjiyaj88i-bqjiyaj88i.gz
 /Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/compressed/jqlvvdt9h6-{0}-c2jlpeoesf-c2jlpeoesf.gz
 /Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/compressed/rffi95fvo5-{0}-erw9l3u2r3-erw9l3u2r3.gz
@@ -204,3 +203,4 @@
 /Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/scopedcss/Shared/NavMenu.razor.rz.scp.css
 /Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/compressed/x4xw8it8el-{0}-1wndvs4mfe-1wndvs4mfe.gz
 /Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/compressed/tulgk4w611-{0}-1wndvs4mfe-1wndvs4mfe.gz
+/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/Debug/net10.0/compressed/l68hx24phw-{0}-ryog8vkuoi-ryog8vkuoi.gz
