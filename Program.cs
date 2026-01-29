@@ -1,34 +1,23 @@
-using FamilyBudgetTracker.Data;
-using FamilyBudgetTracker.Services;
+using FamilyBudgetExpenseTracker.Data;
+using FamilyBudgetExpenseTracker.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
+// Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite("Data Source=familybudget.db"));
 
-// Custom services
-builder.Services.AddScoped<IExpenseService, ExpenseService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<IBudgetService, BudgetService>();
-builder.Services.AddScoped<IReportService, ReportService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-
-// Authentication
-builder.Services.AddAuthentication();
-builder.Services.AddAuthorization();
-
-// Session state (for logged-in user)
+// Session state
 builder.Services.AddScoped<UserState>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -38,9 +27,6 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
 
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
@@ -52,5 +38,4 @@ using (var scope = app.Services.CreateScope())
     db.Database.EnsureCreated();
     SeedData.Initialize(db);
 }
-
 app.Run();

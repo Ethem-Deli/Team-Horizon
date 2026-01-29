@@ -1,0 +1,17 @@
+/* Scoped styles for NavMenu component */
+.nav-menu-wrapper[b-2lhaq3n4y6] {
+    min-height: 100vh;
+}
+
+.brand-logo[b-2lhaq3n4y6] {
+    padding: 1rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand-logo h3[b-2lhaq3n4y6] {
+    background: linear-gradient(90deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}

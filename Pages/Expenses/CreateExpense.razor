@@ -1,0 +1,62 @@
+@page "/expenses/create"
+@using Microsoft.EntityFrameworkCore;
+@inject ApplicationDbContext DbContext
+@inject UserState UserState
+@inject NavigationManager Navigation
+
+<PageTitle>Add Expense</PageTitle>
+
+<h1>➕ Add New Expense</h1>
+
+<EditForm Model="@expense" OnValidSubmit="HandleSubmit">
+    <div class="mb-3">
+        <label>Amount:</label>
+        <InputNumber @bind-Value="expense.Amount" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Date:</label>
+        <InputDate @bind-Value="expense.Date" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Description:</label>
+        <InputText @bind-Value="expense.Description" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Category:</label>
+        <InputSelect @bind-Value="expense.CategoryId" class="form-control">
+            <option value="0">Select a category...</option>
+            @foreach (var category in categories)
+            {
+                <option value="@category.Id">@category.Icon @category.Name</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="/expenses" class="btn btn-secondary">Cancel</a>
+    </div>
+</EditForm>
+
+@code {
+    private Expense expense = new Expense { Date = DateTime.Today };
+    private List<Category> categories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await DbContext.Categories
+        .Where(c => c.UserId == UserState.CurrentUserId)
+        .ToListAsync();
+    }
+
+    private async Task HandleSubmit()
+    {
+        expense.UserId = UserState.CurrentUserId;
+        DbContext.Expenses.Add(expense);
+        await DbContext.SaveChangesAsync();
+        Navigation.NavigateTo("/expenses");
+    }
+}

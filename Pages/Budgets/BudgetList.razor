@@ -1,0 +1,101 @@
+@page "/budgets"
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext DbContext
+@inject UserState UserState
+
+<PageTitle>Budgets</PageTitle>
+
+<h1>📊 Budgets</h1>
+
+<div class="mb-3">
+    <a href="/budgets/create" class="btn btn-primary">➕ Set New Budget</a>
+</div>
+
+@if (budgets == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!budgets.Any())
+{
+    <p>No budgets set. <a href="/budgets/create">Create your first budget</a></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Period</th>
+                <th>Budget Amount</th>
+                <th>Actual Spent</th>
+                <th>Remaining</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var budget in budgets)
+            {
+                var spent = GetSpentAmount(budget);
+                var remaining = budget.Amount - spent;
+                var percentage = (spent / budget.Amount) * 100;
+
+                <tr>
+                    <td>@GetMonthName(budget.Month) @budget.Year</td>
+                    <td>$@budget.Amount.ToString("N2")</td>
+                    <td>$@spent.ToString("N2")</td>
+                    <td>$@remaining.ToString("N2")</td>
+                    <td>
+                        @if (percentage < 80)
+                        {
+                            <span class="badge bg-success">On Track</span>
+                        }
+                        else if (percentage < 100)
+                        {
+                            <span class="badge bg-warning">Warning</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Over Budget</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Budget>? budgets;
+    private Dictionary<int, decimal> spentAmounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        budgets = await DbContext.Budgets
+        .Where(b => b.UserId == UserState.CurrentUserId)
+        .OrderByDescending(b => b.Year)
+        .ThenByDescending(b => b.Month)
+        .ToListAsync();
+
+        // Calculate spent amounts
+        foreach (var budget in budgets)
+        {
+            var startDate = new DateTime(budget.Year, budget.Month, 1);
+            var endDate = startDate.AddMonths(1);
+
+            var spent = await DbContext.Expenses
+            .Where(e => e.UserId == UserState.CurrentUserId && e.Date >= startDate && e.Date < endDate)
+            .SumAsync(e => e.Amount);
+
+            spentAmounts[budget.Id] = spent;
+        }
+    }
+
+    private decimal GetSpentAmount(Budget budget)
+    {
+        return spentAmounts.GetValueOrDefault(budget.Id, 0);
+    }
+
+    private string GetMonthName(int month)
+    {
+        return new DateTime(2000, month, 1).ToString("MMMM");
+    }
+}

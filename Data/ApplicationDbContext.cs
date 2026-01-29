@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using FamilyBudgetTracker.Models;
+using FamilyBudgetExpenseTracker.Models;
 
-namespace FamilyBudgetTracker.Data;
+namespace FamilyBudgetExpenseTracker.Data;
 
 public class ApplicationDbContext : DbContext
 {
@@ -19,31 +19,17 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // User relationships
+        // Configure relationships
         modelBuilder.Entity<User>()
             .HasMany(u => u.Expenses)
             .WithOne(e => e.User)
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.Categories)
-            .WithOne(c => c.User)
-            .HasForeignKey(c => c.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // Category-Expense relationship
         modelBuilder.Entity<Category>()
             .HasMany(c => c.Expenses)
             .WithOne(e => e.Category)
             .HasForeignKey(e => e.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        // Indexes for performance
-        modelBuilder.Entity<Expense>()
-            .HasIndex(e => e.Date);
-
-        modelBuilder.Entity<Expense>()
-            .HasIndex(e => e.UserId);
     }
 }

@@ -1,0 +1,70 @@
+@using Microsoft.AspNetCore.Components.Routing
+
+<div class="nav-menu">
+    <div class="brand-logo">
+        <h3>💰 Budget Tracker</h3>
+    </div>
+
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="icon">🏠</span> Dashboard
+            </NavLink>
+        </div>
+
+        <div class="nav-section">Expenses</div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="expenses">
+                <span class="icon">💳</span> View Expenses
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="expenses/create">
+                <span class="icon">➕</span> Add Expense
+            </NavLink>
+        </div>
+
+        <div class="nav-section">Categories</div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="categories">
+                <span class="icon">📁</span> Categories
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="categories/create">
+                <span class="icon">🏷️</span> New Category
+            </NavLink>
+        </div>
+
+        <div class="nav-section">Budgets</div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="budgets">
+                <span class="icon">📊</span> Budgets
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="budgets/create">
+                <span class="icon">🎯</span> Set Budget
+            </NavLink>
+        </div>
+
+        <div class="nav-section">Reports</div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="reports/monthly">
+                <span class="icon">📈</span> Monthly Report
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="reports/category">
+                <span class="icon">🥧</span> By Category
+            </NavLink>
+        </div>
+
+        <div class="nav-section">Account</div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="account/profile">
+                <span class="icon">👤</span> Profile
+            </NavLink>
+        </div>
+    </nav>
+</div>

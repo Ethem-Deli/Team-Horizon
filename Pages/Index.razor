@@ -1,0 +1,139 @@
+@page "/"
+@using Microsoft.EntityFrameworkCore;
+@inject ApplicationDbContext DbContext
+@inject UserState UserState
+
+<PageTitle>Dashboard - Family Budget Tracker</PageTitle>
+
+<h1>📊 Dashboard</h1>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5>💳 Total Expenses</h5>
+                <h2>$@totalExpenses.ToString("N2")</h2>
+                <small>This month</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5>📊 Budget</h5>
+                <h2>$@monthlyBudget.ToString("N2")</h2>
+                <small>Monthly limit</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5>💰 Remaining</h5>
+                <h2>$@(monthlyBudget - totalExpenses).ToString("N2")</h2>
+                <small>@((int)((1 - (totalExpenses / monthlyBudget)) * 100))% left</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5>📁 Categories</h5>
+                <h2>@categoryCount</h2>
+                <small>Active categories</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5>Recent Expenses</h5>
+                @if (recentExpenses.Any())
+                {
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var expense in recentExpenses)
+                            {
+                                <tr>
+                                    <td>@expense.Date.ToString("MMM dd")</td>
+                                    <td>@expense.Description</td>
+                                    <td>@expense.Category.Icon @expense.Category.Name</td>
+                                    <td>$@expense.Amount.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p>No expenses yet.</p>
+                }
+                <a href="/expenses" class="btn btn-primary">View All</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5>Quick Actions</h5>
+                <div class="d-grid gap-2">
+                    <a href="/expenses/create" class="btn btn-success">➕ Add Expense</a>
+                    <a href="/categories/create" class="btn btn-info">📁 New Category</a>
+                    <a href="/budgets/create" class="btn btn-warning">📊 Set Budget</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private decimal totalExpenses;
+    private decimal monthlyBudget;
+    private int categoryCount;
+    private List<Expense> recentExpenses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+        // Get month expenses
+        totalExpenses = await DbContext.Expenses
+        .Where(e => e.UserId == UserState.CurrentUserId && e.Date >= startOfMonth)
+        .SumAsync(e => e.Amount);
+
+        // Get budget
+        var budget = await DbContext.Budgets
+        .FirstOrDefaultAsync(b => b.UserId == UserState.CurrentUserId
+        && b.Month == DateTime.Today.Month
+        && b.Year == DateTime.Today.Year);
+        monthlyBudget = budget?.Amount ?? 0;
+
+        // Get category count
+        categoryCount = await DbContext.Categories
+        .Where(c => c.UserId == UserState.CurrentUserId)
+        .CountAsync();
+
+        // Get recent expenses
+        recentExpenses = await DbContext.Expenses
+        .Include(e => e.Category)
+        .Where(e => e.UserId == UserState.CurrentUserId)
+        .OrderByDescending(e => e.Date)
+        .Take(5)
+        .ToListAsync();
+    }
+}

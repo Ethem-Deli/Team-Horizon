@@ -1,0 +1,29 @@
+@page "/account/profile"
+@inject UserState UserState
+
+<PageTitle>Profile</PageTitle>
+
+<h1>👤 My Profile</h1>
+
+<div class="card">
+    <div class="card-body">
+        <h5>User Information</h5>
+        <p><strong>Name:</strong> @UserState.CurrentUserName</p>
+        <p><strong>User ID:</strong> @UserState.CurrentUserId</p>
+        <p><strong>Status:</strong>
+            @if (UserState.IsAuthenticated)
+            {
+                <span class="badge bg-success">Active</span>
+            }
+        </p>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <h5>Quick Actions</h5>
+        <a href="/expenses" class="btn btn-primary">View Expenses</a>
+        <a href="/budgets" class="btn btn-info">Manage Budgets</a>
+        <a href="/categories" class="btn btn-success">Manage Categories</a>
+    </div>
+</div>

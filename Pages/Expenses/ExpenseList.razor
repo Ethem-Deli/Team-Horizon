@@ -1,0 +1,93 @@
+@page "/expenses"
+@using Microsoft.EntityFrameworkCore;
+@inject ApplicationDbContext DbContext
+@inject UserState UserState
+@inject NavigationManager Navigation
+
+<PageTitle>Expenses</PageTitle>
+
+<h1>💳 My Expenses</h1>
+
+<div class="mb-3">
+    <a href="/expenses/create" class="btn btn-primary">➕ Add New Expense</a>
+</div>
+
+@if (expenses == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!expenses.Any())
+{
+    <div class="alert alert-info">
+        No expenses found. <a href="/expenses/create">Add your first expense</a>
+    </div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var expense in expenses)
+            {
+                <tr>
+                    <td>@expense.Date.ToString("MMM dd, yyyy")</td>
+                    <td>@expense.Description</td>
+                    <td>
+                        <span style="color: @expense.Category.ColorCode">
+                            @expense.Category.Icon @expense.Category.Name
+                        </span>
+                    </td>
+                    <td><strong>$@expense.Amount.ToString("N2")</strong></td>
+                    <td>
+                        <a href="/expenses/edit/@expense.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteExpense(expense.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3"><strong>Total:</strong></td>
+                <td><strong>$@expenses.Sum(e => e.Amount).ToString("N2")</strong></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+}
+
+@code {
+    private List<Expense>? expenses;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadExpenses();
+    }
+
+    private async Task LoadExpenses()
+    {
+        expenses = await DbContext.Expenses
+        .Include(e => e.Category)
+        .Where(e => e.UserId == UserState.CurrentUserId)
+        .OrderByDescending(e => e.Date)
+        .ToListAsync();
+    }
+
+    private async Task DeleteExpense(int id)
+    {
+        var expense = await DbContext.Expenses.FindAsync(id);
+        if (expense != null)
+        {
+            DbContext.Expenses.Remove(expense);
+            await DbContext.SaveChangesAsync();
+            await LoadExpenses();
+        }
+    }
+}
