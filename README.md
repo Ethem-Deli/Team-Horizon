@@ -223,3 +223,147 @@ Description:Verify all rubric requirements are met.
 ### Card: Submission to Canvas
 Description:Submit required links and artifacts.
 
+# Family Budget & Expense Tracker - Plain Language Description
+## What It Does
+The Family Budget & Expense Tracker is a personal finance management web application that helps individuals and families track their spending, set budgets, and understand where their money goes.
+
+## Primary Function
+Think of it as a digital financial diary that:
+
+Records every expense you make (like buying groceries, paying bills, or going to the movies)
+Organizes expenses into categories (food, transportation, entertainment, etc.)
+Compares your spending against budgets you set for yourself
+Shows you visual reports so you can see spending patterns
+
+## How It Works (User Journey)
+Step 1: Get Started
+
+You create an account and log in
+The system gives you a personal dashboard
+
+Step 2: Set Up Categories
+
+You create categories that match your life (e.g., "Groceries," "Gas," "Netflix")
+Each category gets a color and icon for easy recognition
+
+Step 3: Record Expenses
+When you spend money, you:
+
+Enter the amount (e.g., $45.50)
+Choose the date
+Pick a category
+Add a description (e.g., "Weekly groceries at Walmart")
+Click "Save"
+
+Step 4: Set Budgets
+
+You decide: "I want to spend only $2,000 this month"
+Or get specific: "Only $400 on groceries this month"
+The app tracks how much you've spent vs. your limit
+
+Step 5: View Reports
+The app shows you:
+
+Monthly summaries: "You spent $1,850 in January"
+Category breakdowns: "40% went to food, 25% to rent, 15% to entertainment"
+Budget warnings: "You're at 85% of your grocery budget!"
+Charts and graphs: Visual pie charts showing spending distribution
+
+# What It Intends to Achieve
+1. Financial Awareness
+Problem: Most people don't know where their money goes
+Solution: See exactly how much you spend and on what
+Example: "I didn't realize I spend $200/month on coffee shops!"
+
+2. Budget Control
+Problem: Overspending without realizing it
+Solution: Set limits and get warnings before you overspend
+Example: The app shows you're at 90% of your entertainment budget with 10 days left in the month
+
+3. Spending Patterns
+Problem: Can't identify wasteful spending habits
+Solution: Visual reports reveal trends over time
+Example: Charts show your restaurant spending increased 30% over 3 months
+
+4. Financial Planning
+Problem: Hard to plan for the future without historical data
+Solution: Use past spending to plan realistic future budgets
+Example: "I spent an average of $500/month on groceries, so I'll budget $550 next month"
+
+5. Financial Accountability
+Problem: Shared finances are hard to track
+Solution: One place where family members can see all expenses
+Example: Both partners can see household spending and stay on the same page
+
+# Real-World Scenario
+Meet Sarah:
+
+She feels like money "just disappears" every month
+She's trying to save for a vacation but never has money left over
+
+Using the App:
+Month 1:
+
+Sarah records all her expenses for 30 days
+She's shocked to see she spent $300 on food delivery apps
+She spent $150 on subscriptions she forgot about
+
+Month 2:
+
+Sarah sets a budget: $2,500 total, with $400 for groceries
+She creates categories for each type of spending
+The app warns her when she's close to limits
+
+Month 3:
+
+Sarah reviews her reports
+She sees her "impulse shopping" category is too high
+She cancels unused subscriptions
+She starts cooking more (food delivery drops to $100)
+
+Result:
+
+Sarah saves $400 in one month
+She books her vacation 6 months later
+She feels in control of her finances
+
+# Core Goals
+Short-term Goals:
+
+✅ Track every dollar spent
+✅ Categorize expenses automatically
+✅ Know your spending in real-time
+✅ Stay within monthly budgets
+
+Long-term Goals:
+
+💰 Build better spending habits
+💰 Identify and eliminate wasteful spending
+💰 Save money consistently
+💰 Achieve financial goals (vacation, emergency fund, debt payoff)
+
+
+🛠️ Technical Function (Simplified)
+Behind the Scenes:
+
+You enter data → Stored in a database
+The app calculates → Totals, percentages, comparisons
+You view results → Dashboard, reports, charts
+The cycle repeats → Continuous tracking and improvement
+
+Key Features:
+
+CRUD Operations: Create, Read, Update, Delete expenses
+Data Organization: Group by category, date, amount
+Calculations: Totals, averages, percentages
+Visualization: Turn numbers into understandable charts
+Security: Each user only sees their own data
+
+# 📈 Success Metrics
+The app is successful when users:
+
+✅ Know their spending: Can tell you how much they spent last month
+✅ Stay on budget: Spend less than budgeted amounts
+✅ Identify problems: Discover wasteful spending patterns
+✅ Make changes: Adjust behavior based on data
+✅ Save money: Have money left over at month's end
