@@ -1,0 +1,25 @@
+# Build output
+bin/
+obj/
+
+# Database files: Don't commit user data!
+*.db
+*.db-shm
+*.db-wal
+familybudget.db
+
+# User secrets
+appsettings.Development.json
+appsettings.Local.json
+
+# IDE files
+.vs/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
