@@ -32,8 +32,12 @@
         <div class="card">
             <div class="card-body">
                 <h5>💰 Remaining</h5>
-                <h2>$@(monthlyBudget - totalExpenses).ToString("N2")</h2>
-                <small>@((int)((1 - (totalExpenses / monthlyBudget)) * 100))% left</small>
+                <h2>$@remainingBudget.ToString("N2")</h2>
+                @* <small>@((int)((1 - (totalExpenses / monthlyBudget)) * 100))% left</small> *@
+                @if (monthlyBudget > 0)
+                {
+                    <small>@PercentageLeft% left</small>
+                }
             </div>
         </div>
     </div>
@@ -104,8 +108,10 @@
 @code {
     private decimal totalExpenses;
     private decimal monthlyBudget;
+    private decimal remainingBudget => monthlyBudget - totalExpenses;
     private int categoryCount;
     private List<Expense> recentExpenses = new();
+    private int PercentageLeft => monthlyBudget > 0 ? (int)((1 - (totalExpenses / monthlyBudget)) * 100) : 0;
 
     protected override async Task OnInitializedAsync()
     {
