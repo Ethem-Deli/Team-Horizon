@@ -31,10 +31,9 @@
             <div class="card-body">
                 <h5>💰 Remaining</h5>
                 <h2>$@remainingBudget.ToString("N2")</h2>
-                @* <small>@((int)((1 - (totalExpenses / monthlyBudget)) * 100))% left</small> *@
                 @if (monthlyBudget > 0)
                 {
-                    <small>@PercentageLeft% left</small>
+                    <small>@percentLeft% left</small>
                 }
             </div>
         </div>
@@ -114,15 +113,18 @@
     private decimal remainingBudget => monthlyBudget - totalExpenses;
     private int categoryCount;
     private List<Expense> recentExpenses = new();
-    private int PercentageLeft => monthlyBudget > 0 ? (int)((1 - (totalExpenses / monthlyBudget)) * 100) : 0;
+    @* private int percentLeft => monthlyBudget > 0 ? (int)((1 - (totalExpenses / monthlyBudget)) * 100) : 0; *@
+    private int percentLeft;
 
     protected override async Task OnInitializedAsync()
     {
         var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 
-        totalExpenses = await DbContext.Expenses
+        var expenses = await DbContext.Expenses
         .Where(e => e.UserId == UserState.CurrentUserId && e.Date >= startOfMonth)
-        .SumAsync(e => e.Amount);
+        .ToListAsync();
+
+        totalExpenses = expenses.Sum(e => e.Amount);
 
         var budget = await DbContext.Budgets
         .FirstOrDefaultAsync(b =>
@@ -131,8 +133,6 @@
         b.Year == DateTime.Today.Year);
 
         monthlyBudget = budget?.Amount ?? 0m;
-
-        remaining = monthlyBudget - totalExpenses;
 
         // Safe percent calculation (no divide by zero)
         if (monthlyBudget > 0m)
