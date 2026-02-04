@@ -1,9 +1,7 @@
 @page "/reports/category"
-@using Microsoft.EntityFrameworkCore;
+@using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
-
-<PageTitle>Category Breakdown</PageTitle>
 
 <h1>🥧 Expense Breakdown by Category</h1>
 
@@ -17,6 +15,7 @@
             }
         </select>
     </div>
+
     <div class="col-md-3">
         <select @bind="selectedYear" class="form-control">
             @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
@@ -25,6 +24,7 @@
             }
         </select>
     </div>
+
     <div class="col-md-3">
         <button @onclick="LoadReport" class="btn btn-primary">Load Report</button>
     </div>
@@ -40,6 +40,8 @@ else if (!categoryBreakdown.Any())
 }
 else
 {
+    var grandTotal = categoryBreakdown.Sum(x => x.Total);
+
     <table class="table">
         <thead>
             <tr>
@@ -49,31 +51,37 @@ else
                 <th>Count</th>
             </tr>
         </thead>
+
         <tbody>
             @foreach (var item in categoryBreakdown.OrderByDescending(x => x.Total))
             {
-                var percentage = (item.Total / categoryBreakdown.Sum(x => x.Total)) * 100;
+                var percentage = grandTotal > 0m ? (item.Total / grandTotal) * 100m : 0m;
 
                 <tr>
-                    <td style="color: @item.Category.ColorCode">
-                        @item.Category.Icon @item.Category.Name
+                    <td style="color: @(item.ColorCode ?? "#000")">
+                        @(item.Icon ?? "") @item.CategoryName
                     </td>
+
                     <td><strong>$@item.Total.ToString("N2")</strong></td>
+
                     <td>
                         <div class="progress">
-                            <div class="progress-bar" style="width: @percentage%; background-color: @item.Category.ColorCode">
+                            <div class="progress-bar"
+                                style="width: @percentage%; background-color: @(item.ColorCode ?? "#000")">
                                 @percentage.ToString("N0")%
                             </div>
                         </div>
                     </td>
+
                     <td>@item.Count transactions</td>
                 </tr>
             }
         </tbody>
+
         <tfoot>
             <tr>
                 <td><strong>Total</strong></td>
-                <td><strong>$@categoryBreakdown.Sum(x => x.Total).ToString("N2")</strong></td>
+                <td><strong>$@grandTotal.ToString("N2")</strong></td>
                 <td></td>
                 <td><strong>@categoryBreakdown.Sum(x => x.Count)</strong></td>
             </tr>
@@ -92,33 +100,43 @@ else
         .Include(e => e.Category)
         .Where(e => e.UserId == UserState.CurrentUserId);
 
+        // Month filter. If month == 0, treat it as "All Time" (no date filter).
         if (selectedMonth > 0)
         {
             var startDate = new DateTime(selectedYear, selectedMonth, 1);
             var endDate = startDate.AddMonths(1);
             query = query.Where(e => e.Date >= startDate && e.Date < endDate);
         }
-        else
-        {
-            query = query.Where(e => e.Date.Year == selectedYear);
-        }
 
         var expenses = await query.ToListAsync();
 
+        // Group by category ID (or 0 for null category) to avoid null-key issues
         categoryBreakdown = expenses
-        .GroupBy(e => e.Category)
-        .Select(g => new CategoryBreakdownItem
+        .GroupBy(e => e.CategoryId)
+        .Select(g =>
         {
-            Category = g.Key,
-            Total = g.Sum(e => e.Amount),
-            Count = g.Count()
+            var first = g.FirstOrDefault();
+            var cat = first?.Category;
+
+            return new CategoryBreakdownItem
+            {
+                CategoryId = g.Key,
+                CategoryName = cat?.Name ?? "Uncategorized",
+                Icon = cat?.Icon ?? "",
+                ColorCode = cat?.ColorCode ?? "#000",
+                Total = g.Sum(e => e.Amount),
+                Count = g.Count()
+            };
         })
         .ToList();
     }
 
     private class CategoryBreakdownItem
     {
-        public Category Category { get; set; } = null!;
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; } = "Uncategorized";
+        public string Icon { get; set; } = "";
+        public string ColorCode { get; set; } = "#000";
         public decimal Total { get; set; }
         public int Count { get; set; }
     }

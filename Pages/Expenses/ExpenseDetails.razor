@@ -1,0 +1,64 @@
+@page "/expenses/details/{Id:int}"
+
+@using Microsoft.AspNetCore.Components
+@using Microsoft.EntityFrameworkCore
+
+@inject ApplicationDbContext DbContext
+@inject UserState UserState
+@inject NavigationManager Navigation
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (expense == null)
+{
+    <div class="alert alert-warning">
+        Expense not found.
+    </div>
+
+    <a href="/expenses" class="btn btn-secondary">Back</a>
+}
+else
+{
+    <div class="card">
+        <div class="card-header">
+            <h3>Expense Details</h3>
+        </div>
+
+        <div class="card-body">
+            <p><strong>Date:</strong> @expense.Date.ToString("MMM dd, yyyy")</p>
+            <p><strong>Description:</strong> @expense.Description</p>
+
+            <p>
+                <strong>Category:</strong>
+                <span style="color: @(expense.Category?.ColorCode ?? "#000")">
+                    @(expense.Category?.Icon ?? "") @(expense.Category?.Name ?? "Uncategorized")
+                </span>
+            </p>
+
+            <p><strong>Amount:</strong> $@expense.Amount.ToString("N2")</p>
+        </div>
+
+        <div class="card-footer">
+            <a href="/expenses" class="btn btn-secondary">Back</a>
+            <a href="/expenses/edit/@expense.Id" class="btn btn-primary">Edit</a>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Expense? expense;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        expense = await DbContext.Expenses
+        .Include(e => e.Category)
+        .FirstOrDefaultAsync(e => e.Id == Id && e.UserId == UserState.CurrentUserId);
+
+        loading = false;
+    }
+}

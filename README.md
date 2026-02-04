@@ -364,3 +364,15 @@ Description:Verify all rubric requirements are met.
 
 ### Card: Submission to Canvas
 Description:Submit required links and artifacts.
+-----------------------------------------------
+Depencies to install 
+dotnet add package Microsoft.EntityFrameworkCore
+dotnet add package Microsoft.EntityFrameworkCore.Sqlite
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+dotnet add package Microsoft.EntityFrameworkCore.Design
+to restore packages
+dotnet resRebuild the project
+
+Rebuild the project
+dotnet build
+
