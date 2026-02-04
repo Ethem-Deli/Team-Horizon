@@ -34,5 +34,19 @@ public class ApplicationDbContext : DbContext
             .WithOne(e => e.Category)
             .HasForeignKey(e => e.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // --------- NEW ADDITIONS ----------
+
+        // User → Categories (1-to-many, cascade delete)
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.Categories)
+            .WithOne(c => c.User)
+            .HasForeignKey(c => c.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Optional: Ensure unique category name per user
+        modelBuilder.Entity<Category>()
+            .HasIndex(c => new { c.UserId, c.Name })
+            .IsUnique();
     }
 }

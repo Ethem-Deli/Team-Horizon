@@ -1,9 +1,7 @@
 @page "/reports/monthly"
-@using Microsoft.EntityFrameworkCore;
+@using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
-
-<PageTitle>Monthly Report</PageTitle>
 
 <h1>📈 Monthly Report</h1>
 
@@ -16,6 +14,7 @@
             }
         </select>
     </div>
+
     <div class="col-md-3">
         <select @bind="selectedYear" class="form-control">
             @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
@@ -24,6 +23,7 @@
             }
         </select>
     </div>
+
     <div class="col-md-3">
         <button @onclick="LoadReport" class="btn btn-primary">Load Report</button>
     </div>
@@ -39,15 +39,18 @@ else if (!expenses.Any())
 }
 else
 {
+    var total = expenses.Sum(e => e.Amount);
+    var count = expenses.Count;
+    var average = count > 0 ? (total / count) : 0m;
+
     <div class="row">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
                     <h5>Summary</h5>
-                    <p>Total Expenses: <strong>$@expenses.Sum(e => e.Amount).ToString("N2")</strong></p>
-                    <p>Number of Transactions: <strong>@expenses.Count</strong></p>
-                    <p>Average per Transaction: <strong>$@(expenses.Sum(e => e.Amount) /
-                                                    expenses.Count).ToString("N2")</strong></p>
+                    <p>Total Expenses: <strong>$@total.ToString("N2")</strong></p>
+                    <p>Number of Transactions: <strong>@count</strong></p>
+                    <p>Average per Transaction: <strong>$@average.ToString("N2")</strong></p>
                 </div>
             </div>
         </div>
@@ -70,7 +73,10 @@ else
                     <tr>
                         <td>@expense.Date.ToString("MMM dd")</td>
                         <td>@expense.Description</td>
-                        <td>@expense.Category.Icon @expense.Category.Name</td>
+                        <td>
+                            @(expense.Category?.Icon ?? "")
+                            @(expense.Category?.Name ?? "Uncategorized")
+                        </td>
                         <td>$@expense.Amount.ToString("N2")</td>
                     </tr>
                 }
@@ -91,9 +97,10 @@ else
 
         expenses = await DbContext.Expenses
         .Include(e => e.Category)
-        .Where(e => e.UserId == UserState.CurrentUserId
-        && e.Date >= startDate
-        && e.Date < endDate)
+        .Where(e =>
+        e.UserId == UserState.CurrentUserId &&
+        e.Date >= startDate &&
+        e.Date < endDate)
         .OrderByDescending(e => e.Date)
         .ToListAsync();
     }

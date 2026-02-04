@@ -1,9 +1,7 @@
 @page "/"
-@using Microsoft.EntityFrameworkCore;
+@using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
-
-<PageTitle>Dashboard - Family Budget Tracker</PageTitle>
 
 <h1>📊 Dashboard</h1>
 
@@ -32,8 +30,17 @@
         <div class="card">
             <div class="card-body">
                 <h5>💰 Remaining</h5>
-                <h2>$@(monthlyBudget - totalExpenses).ToString("N2")</h2>
-                <small>@((int)((1 - (totalExpenses / monthlyBudget)) * 100))% left</small>
+                <h2>$@remaining.ToString("N2")</h2>
+                <small>
+                    @if (monthlyBudget > 0)
+                    {
+                        @($"{percentLeft}% left")
+                    }
+                    else
+                    {
+                        <span>No budget set</span>
+                    }
+                </small>
             </div>
         </div>
     </div>
@@ -54,6 +61,7 @@
         <div class="card">
             <div class="card-body">
                 <h5>Recent Expenses</h5>
+
                 @if (recentExpenses.Any())
                 {
                     <table class="table">
@@ -71,7 +79,10 @@
                                 <tr>
                                     <td>@expense.Date.ToString("MMM dd")</td>
                                     <td>@expense.Description</td>
-                                    <td>@expense.Category.Icon @expense.Category.Name</td>
+                                    <td>
+                                        @(expense.Category?.Icon ?? "")
+                                        @(expense.Category?.Name ?? "Uncategorized")
+                                    </td>
                                     <td>$@expense.Amount.ToString("N2")</td>
                                 </tr>
                             }
@@ -82,6 +93,7 @@
                 {
                     <p>No expenses yet.</p>
                 }
+
                 <a href="/expenses" class="btn btn-primary">View All</a>
             </div>
         </div>
@@ -104,6 +116,8 @@
 @code {
     private decimal totalExpenses;
     private decimal monthlyBudget;
+    private decimal remaining;
+    private int percentLeft;
     private int categoryCount;
     private List<Expense> recentExpenses = new();
 
@@ -111,24 +125,39 @@
     {
         var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 
-        // Get month expenses
         totalExpenses = await DbContext.Expenses
         .Where(e => e.UserId == UserState.CurrentUserId && e.Date >= startOfMonth)
         .SumAsync(e => e.Amount);
 
-        // Get budget
         var budget = await DbContext.Budgets
-        .FirstOrDefaultAsync(b => b.UserId == UserState.CurrentUserId
-        && b.Month == DateTime.Today.Month
-        && b.Year == DateTime.Today.Year);
-        monthlyBudget = budget?.Amount ?? 0;
+        .FirstOrDefaultAsync(b =>
+        b.UserId == UserState.CurrentUserId &&
+        b.Month == DateTime.Today.Month &&
+        b.Year == DateTime.Today.Year);
 
-        // Get category count
+        monthlyBudget = budget?.Amount ?? 0m;
+
+        remaining = monthlyBudget - totalExpenses;
+
+        // Safe percent calculation (no divide by zero)
+        if (monthlyBudget > 0m)
+        {
+            var ratioLeft = 1m - (totalExpenses / monthlyBudget);
+            percentLeft = (int)Math.Round(ratioLeft * 100m);
+
+            // clamp to a sensible range
+            if (percentLeft < 0) percentLeft = 0;
+            if (percentLeft > 100) percentLeft = 100;
+        }
+        else
+        {
+            percentLeft = 0;
+        }
+
         categoryCount = await DbContext.Categories
         .Where(c => c.UserId == UserState.CurrentUserId)
         .CountAsync();
 
-        // Get recent expenses
         recentExpenses = await DbContext.Expenses
         .Include(e => e.Category)
         .Where(e => e.UserId == UserState.CurrentUserId)
