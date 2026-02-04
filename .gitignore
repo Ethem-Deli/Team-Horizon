@@ -1,6 +1,6 @@
 # Build output
-bin
-obj
+[Bb]in/
+[Oo]bj/
 
 # Database files: Don't commit user data!
 *.db
