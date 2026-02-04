@@ -19,169 +19,169 @@ build_property.TargetFrameworkIdentifier = .NETCoreApp
 build_property.TargetFrameworkVersion = v10.0
 build_property.RootNamespace = FamilyBudgetExpenseTracker
 build_property.RootNamespace = FamilyBudgetExpenseTracker
-build_property.ProjectDir = /Users/Dommmy/Documents/FamilyBudgetExpenseTracker/
+build_property.ProjectDir = D:\CSE-325-26T1\Team-Horizon\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 9.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = /Users/Dommmy/Documents/FamilyBudgetExpenseTracker
+build_property.MSBuildProjectDirectory = D:\CSE-325-26T1\Team-Horizon
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/App.razor]
+[D:/CSE-325-26T1/Team-Horizon/App.razor]
 build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Account/Login.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjb3VudC9Mb2dpbi5yYXpvcg==
+[D:/CSE-325-26T1/Team-Horizon/Pages/Account/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxMb2dpbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Account/Logout.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjb3VudC9Mb2dvdXQucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Pages/Account/Logout.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxMb2dvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Account/Profile.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjb3VudC9Qcm9maWxlLnJhem9y
+[D:/CSE-325-26T1/Team-Horizon/Pages/Account/Profile.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxQcm9maWxlLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Account/Register.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjb3VudC9SZWdpc3Rlci5yYXpvcg==
+[D:/CSE-325-26T1/Team-Horizon/Pages/Account/Register.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxSZWdpc3Rlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Budgets/BudgetList.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQnVkZ2V0cy9CdWRnZXRMaXN0LnJhem9y
+[D:/CSE-325-26T1/Team-Horizon/Pages/Budgets/BudgetList.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQnVkZ2V0c1xCdWRnZXRMaXN0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Budgets/BudgetOverview.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQnVkZ2V0cy9CdWRnZXRPdmVydmlldy5yYXpvcg==
+[D:/CSE-325-26T1/Team-Horizon/Pages/Budgets/BudgetOverview.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQnVkZ2V0c1xCdWRnZXRPdmVydmlldy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Budgets/CreateBudget.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQnVkZ2V0cy9DcmVhdGVCdWRnZXQucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Pages/Budgets/CreateBudget.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQnVkZ2V0c1xDcmVhdGVCdWRnZXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Budgets/EditBudget.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQnVkZ2V0cy9FZGl0QnVkZ2V0LnJhem9y
+[D:/CSE-325-26T1/Team-Horizon/Pages/Budgets/EditBudget.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQnVkZ2V0c1xFZGl0QnVkZ2V0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Categories/CategoryList.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ2F0ZWdvcmllcy9DYXRlZ29yeUxpc3QucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Pages/Categories/CategoryList.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2F0ZWdvcmllc1xDYXRlZ29yeUxpc3QucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Categories/CreateCategory.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ2F0ZWdvcmllcy9DcmVhdGVDYXRlZ29yeS5yYXpvcg==
+[D:/CSE-325-26T1/Team-Horizon/Pages/Categories/CreateCategory.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2F0ZWdvcmllc1xDcmVhdGVDYXRlZ29yeS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Categories/EditCategory.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ2F0ZWdvcmllcy9FZGl0Q2F0ZWdvcnkucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Pages/Categories/EditCategory.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2F0ZWdvcmllc1xFZGl0Q2F0ZWdvcnkucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Expenses/CreateExpense.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRXhwZW5zZXMvQ3JlYXRlRXhwZW5zZS5yYXpvcg==
+[D:/CSE-325-26T1/Team-Horizon/Pages/Expenses/CreateExpense.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhwZW5zZXNcQ3JlYXRlRXhwZW5zZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Expenses/EditExpense.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRXhwZW5zZXMvRWRpdEV4cGVuc2UucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Pages/Expenses/EditExpense.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhwZW5zZXNcRWRpdEV4cGVuc2UucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Expenses/ExpenseDetails.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRXhwZW5zZXMvRXhwZW5zZURldGFpbHMucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Pages/Expenses/ExpenseDetails.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhwZW5zZXNcRXhwZW5zZURldGFpbHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Expenses/ExpenseList.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRXhwZW5zZXMvRXhwZW5zZUxpc3QucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Pages/Expenses/ExpenseList.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhwZW5zZXNcRXhwZW5zZUxpc3QucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Index.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSW5kZXgucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Pages/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXgucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/NotFound.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTm90Rm91bmQucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Pages/NotFound.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTm90Rm91bmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Reports/CategoryBreakdown.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUmVwb3J0cy9DYXRlZ29yeUJyZWFrZG93bi5yYXpvcg==
+[D:/CSE-325-26T1/Team-Horizon/Pages/Reports/CategoryBreakdown.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVwb3J0c1xDYXRlZ29yeUJyZWFrZG93bi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Reports/MonthlyReport.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUmVwb3J0cy9Nb250aGx5UmVwb3J0LnJhem9y
+[D:/CSE-325-26T1/Team-Horizon/Pages/Reports/MonthlyReport.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVwb3J0c1xNb250aGx5UmVwb3J0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Reports/SpendingTrends.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUmVwb3J0cy9TcGVuZGluZ1RyZW5kcy5yYXpvcg==
+[D:/CSE-325-26T1/Team-Horizon/Pages/Reports/SpendingTrends.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVwb3J0c1xTcGVuZGluZ1RyZW5kcy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/Components/BudgetProgressBar.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0NvbXBvbmVudHMvQnVkZ2V0UHJvZ3Jlc3NCYXIucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Shared/Components/BudgetProgressBar.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbXBvbmVudHNcQnVkZ2V0UHJvZ3Jlc3NCYXIucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/Components/CategoryPicker.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0NvbXBvbmVudHMvQ2F0ZWdvcnlQaWNrZXIucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Shared/Components/CategoryPicker.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbXBvbmVudHNcQ2F0ZWdvcnlQaWNrZXIucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/Components/ConfirmDialog.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0NvbXBvbmVudHMvQ29uZmlybURpYWxvZy5yYXpvcg==
+[D:/CSE-325-26T1/Team-Horizon/Shared/Components/ConfirmDialog.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbXBvbmVudHNcQ29uZmlybURpYWxvZy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/Components/DateRangePicker.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0NvbXBvbmVudHMvRGF0ZVJhbmdlUGlja2VyLnJhem9y
+[D:/CSE-325-26T1/Team-Horizon/Shared/Components/DateRangePicker.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbXBvbmVudHNcRGF0ZVJhbmdlUGlja2VyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/Components/ExpenseCard.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0NvbXBvbmVudHMvRXhwZW5zZUNhcmQucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Shared/Components/ExpenseCard.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbXBvbmVudHNcRXhwZW5zZUNhcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/Components/ExpenseChart.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0NvbXBvbmVudHMvRXhwZW5zZUNoYXJ0LnJhem9y
+[D:/CSE-325-26T1/Team-Horizon/Shared/Components/ExpenseChart.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbXBvbmVudHNcRXhwZW5zZUNoYXJ0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/Components/LoadingSpinner.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0NvbXBvbmVudHMvTG9hZGluZ1NwaW5uZXIucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Shared/Components/LoadingSpinner.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbXBvbmVudHNcTG9hZGluZ1NwaW5uZXIucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/Layouts/AuthLayout.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0xheW91dHMvQXV0aExheW91dC5yYXpvcg==
+[D:/CSE-325-26T1/Team-Horizon/Shared/Layouts/AuthLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXExheW91dHNcQXV0aExheW91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/Layouts/EmptyLayout.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0xheW91dHMvRW1wdHlMYXlvdXQucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Shared/Layouts/EmptyLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXExheW91dHNcRW1wdHlMYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/LoginDisplay.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0xvZ2luRGlzcGxheS5yYXpvcg==
+[D:/CSE-325-26T1/Team-Horizon/Shared/LoginDisplay.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXExvZ2luRGlzcGxheS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/MainLayout.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL01haW5MYXlvdXQucmF6b3I=
+[D:/CSE-325-26T1/Team-Horizon/Shared/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE1haW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/_Imports.razor]
+[D:/CSE-325-26T1/Team-Horizon/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Layout/MainLayout.razor]
-build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L01haW5MYXlvdXQucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = b-yzf0kpgntj
+[D:/CSE-325-26T1/Team-Horizon/Layout/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE1haW5MYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-s1wjogypm4
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Layout/ReconnectModal.razor]
-build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L1JlY29ubmVjdE1vZGFsLnJhem9y
-build_metadata.AdditionalFiles.CssScope = b-omm4henaqr
+[D:/CSE-325-26T1/Team-Horizon/Layout/ReconnectModal.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XFJlY29ubmVjdE1vZGFsLnJhem9y
+build_metadata.AdditionalFiles.CssScope = b-nnpilczkvb
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Shared/NavMenu.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL05hdk1lbnUucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = b-2lhaq3n4y6
+[D:/CSE-325-26T1/Team-Horizon/Shared/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE5hdk1lbnUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-i8ymv2n2n6
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/Error.cshtml]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRXJyb3IuY3NodG1s
+[D:/CSE-325-26T1/Team-Horizon/Pages/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXJyb3IuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/_Host.cshtml]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvX0hvc3QuY3NodG1s
+[D:/CSE-325-26T1/Team-Horizon/Pages/_Host.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX0hvc3QuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/Pages/_Layout.cshtml]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvX0xheW91dC5jc2h0bWw=
+[D:/CSE-325-26T1/Team-Horizon/Pages/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX0xheW91dC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
