@@ -14,6 +14,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Session state
 builder.Services.AddScoped<UserState>();
+builder.Services.AddScoped<MonthlyReportService>();
 
 var app = builder.Build();
 

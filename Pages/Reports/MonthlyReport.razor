@@ -1,12 +1,16 @@
 @page "/reports/monthly"
-@using Microsoft.EntityFrameworkCore
-@inject ApplicationDbContext DbContext
+@using FamilyBudgetExpenseTracker.Models.ViewModels
+@using FamilyBudgetExpenseTracker.Services
+@inject MonthlyReportService ReportService
 @inject UserState UserState
+
+<PageTitle>Monthly Report - @(new DateTime(selectedYear, selectedMonth, 1).ToString("MMMM yyyy"))</PageTitle>
 
 <h1>📈 Monthly Report</h1>
 
-<div class="row mb-3">
+<div class="row mb-4 bg-light p-3 rounded">
     <div class="col-md-3">
+        <label class="form-label">Month</label>
         <select @bind="selectedMonth" class="form-control">
             @for (int i = 1; i <= 12; i++)
             {
@@ -16,6 +20,7 @@
     </div>
 
     <div class="col-md-3">
+        <label class="form-label">Year</label>
         <select @bind="selectedYear" class="form-control">
             @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
             {
@@ -24,84 +29,155 @@
         </select>
     </div>
 
-    <div class="col-md-3">
-        <button @onclick="LoadReport" class="btn btn-primary">Load Report</button>
+    <div class="col-md-3 d-flex align-items-end">
+        <button @onclick="LoadReport" class="btn btn-primary w-100">
+            <i class="bi bi-search"></i> Load Report
+        </button>
     </div>
 </div>
 
-@if (expenses == null)
+@if (report == null)
 {
-    <p><em>Select a month and click Load Report</em></p>
+    <div class="text-center py-5">
+        <p class="text-muted">Select a period and click Load Report to analyze your spending.</p>
+    </div>
 }
-else if (!expenses.Any())
+else if (!report.Expenses.Any())
 {
-    <p>No expenses for this period.</p>
+    <div class="alert alert-info">
+        No expenses found for <strong>@report.MonthName @report.Year</strong>.
+    </div>
 }
 else
 {
-    var total = expenses.Sum(e => e.Amount);
-    var count = expenses.Count;
-    var average = count > 0 ? (total / count) : 0m;
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5>Summary</h5>
-                    <p>Total Expenses: <strong>$@total.ToString("N2")</strong></p>
-                    <p>Number of Transactions: <strong>@count</strong></p>
-                    <p>Average per Transaction: <strong>$@average.ToString("N2")</strong></p>
+    <!-- Top Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-primary h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Monthly Budget</h6>
+                    <h3 class="text-primary">$@report.TotalBudget.ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-danger h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Total Spent</h6>
+                    <h3 class="text-danger">$@report.TotalExpenses.ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card @(report.IsOverBudget ? "border-warning" : "border-success") h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">@(report.RemainingBalance < 0 ? "Over Budget" : "Remaining")</h6>
+                    <h3 class="@(report.RemainingBalance < 0 ? "text-warning" : "text-success")">
+                        $@Math.Abs(report.RemainingBalance).ToString("N2")
+                    </h3>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="mt-4">
-        <h5>All Expenses</h5>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var expense in expenses)
-                {
-                    <tr>
-                        <td>@expense.Date.ToString("MMM dd")</td>
-                        <td>@expense.Description</td>
-                        <td>
-                            @(expense.Category?.Icon ?? "")
-                            @(expense.Category?.Name ?? "Uncategorized")
-                        </td>
-                        <td>$@expense.Amount.ToString("N2")</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <!-- Visual Progress Bar -->
+    <div class="mb-5">
+        <div class="d-flex justify-content-between mb-1">
+            <span>Budget Usage</span>
+            <span>@report.PercentageUsed.ToString("N1")%</span>
+        </div>
+        <div class="progress" style="height: 25px;">
+            <div class="progress-bar @(report.PercentageUsed > 100 ? "bg-danger" : report.PercentageUsed > 80 ? "bg-warning" : "bg-success")"
+                role="progressbar" style="width: @(Math.Min(report.PercentageUsed, 100))%;">
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Category Breakdown -->
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Spending by Category</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                                <th class="text-end">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cat in report.CategorySummaries)
+                            {
+                                <tr>
+                                    <td>@cat.CategoryName <small class="text-muted">(@cat.TransactionCount)</small></td>
+                                    <td class="text-end">$@cat.TotalSpent.ToString("N2")</td>
+                                    <td class="text-end">@cat.PercentageOfTotalSpending.ToString("N0")%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Transaction List -->
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Transactions</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var expense in report.Expenses)
+                                {
+                                    <tr>
+                                        <td>@expense.Date.ToString("MMM dd")</td>
+                                        <td>
+                                            <div class="fw-bold">@expense.Description</div>
+                                            <small class="text-muted">@expense.Category?.Name</small>
+                                        </td>
+                                        <td class="text-end fw-bold">$@expense.Amount.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
 @code {
     private int selectedMonth = DateTime.Today.Month;
     private int selectedYear = DateTime.Today.Year;
-    private List<Expense>? expenses;
+    private MonthlyReportViewModel? report;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Optional: Load current month on start
+        await LoadReport();
+    }
 
     private async Task LoadReport()
     {
-        var startDate = new DateTime(selectedYear, selectedMonth, 1);
-        var endDate = startDate.AddMonths(1);
-
-        expenses = await DbContext.Expenses
-        .Include(e => e.Category)
-        .Where(e =>
-        e.UserId == UserState.CurrentUserId &&
-        e.Date >= startDate &&
-        e.Date < endDate)
-        .OrderByDescending(e => e.Date)
-        .ToListAsync();
+        report = await ReportService.GetMonthlyReportAsync(
+        UserState.CurrentUserId,
+        selectedYear,
+        selectedMonth
+        );
     }
 }
