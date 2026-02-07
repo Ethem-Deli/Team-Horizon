@@ -1,7 +1,8 @@
 # Build output
 [Bb]in/
 [Oo]bj/
-
+obj
+global.json
 # Database files: Don't commit user data!
 *.db
 *.db-shm
