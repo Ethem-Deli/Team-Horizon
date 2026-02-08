@@ -1,52 +1,41 @@
 using Microsoft.EntityFrameworkCore;
 using FamilyBudgetExpenseTracker.Models;
 
-namespace FamilyBudgetExpenseTracker.Data;
-
-public class ApplicationDbContext : DbContext
+namespace FamilyBudgetExpenseTracker.Data
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
+    public class ApplicationDbContext : DbContext
     {
-    }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-    // ---------- DbSets ----------
-    public DbSet<User> Users { get; set; }
-    public DbSet<Expense> Expenses { get; set; }
-    public DbSet<Category> Categories { get; set; }
-    public DbSet<Budget> Budgets { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Expense> Expenses { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Budget> Budgets { get; set; }
 
-    // ---------- Model Configuration ----------
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
-        // User → Expenses (1-to-many, cascade delete)
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.Expenses)
-            .WithOne(e => e.User)
-            .HasForeignKey(e => e.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            // Configure User -> Categories relationship
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Categories) // This was failing because 'Categories' was missing in User.cs
+                .WithOne(c => c.User)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        // Category → Expenses (1-to-many, restrict delete)
-        modelBuilder.Entity<Category>()
-            .HasMany(c => c.Expenses)
-            .WithOne(e => e.Category)
-            .HasForeignKey(e => e.CategoryId)
-            .OnDelete(DeleteBehavior.Restrict);
+            // Configure User -> Expenses relationship
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Expenses)
+                .WithOne(e => e.User)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        // --------- NEW ADDITIONS ----------
-
-        // User → Categories (1-to-many, cascade delete)
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.Categories)
-            .WithOne(c => c.User)
-            .HasForeignKey(c => c.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // Optional: Ensure unique category name per user
-        modelBuilder.Entity<Category>()
-            .HasIndex(c => new { c.UserId, c.Name })
-            .IsUnique();
+            // Configure User -> Budgets relationship
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Budgets)
+                .WithOne(b => b.User)
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }

@@ -1,70 +1,129 @@
+@using FamilyBudgetExpenseTracker.Services
+@using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
+@inject UserState UserState
+@inject NavigationManager NavManager
 
-<div class="nav-menu">
-    <div class="brand-logo">
-        <h3>💰 Budget Tracker</h3>
+<style>
+    /* Ensure the branding is always visible and not just on hover */
+    .navbar-brand {
+        color: white !important;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-scrollable {
+        background-color: #111827;
+        /* Dark theme sidebar */
+        min-height: calc(100vh - 3.5rem);
+    }
+
+    .user-section {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: auto;
+        padding: 1rem;
+    }
+
+    .nav-link {
+        cursor: pointer;
+    }
+</style>
+
+<div class="top-row ps-3 navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">
+            <span>💰</span> Budget Tracker
+        </a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
     </div>
+</div>
 
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="icon">🏠</span> Dashboard
+                <span class="oi @(UserState.IsAuthenticated ? "oi-dashboard" : "oi-home")" aria-hidden="true"></span>
+                @(UserState.IsAuthenticated ? "Dashboard" : "Home")
             </NavLink>
         </div>
 
-        <div class="nav-section">Expenses</div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="expenses">
-                <span class="icon">💳</span> View Expenses
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="expenses/create">
-                <span class="icon">➕</span> Add Expense
-            </NavLink>
-        </div>
+        @if (UserState.IsAuthenticated)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="expenses">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> My Expenses
+                </NavLink>
+            </div>
+            @* Added Categories link *@
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="categories">
+                    <span class="oi oi-tags" aria-hidden="true"></span> Categories
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="budgets">
+                    <span class="oi oi-credit-card" aria-hidden="true"></span> Budgets
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="reports/monthly">
+                    <span class="oi oi-graph" aria-hidden="true"></span> Monthly Report
+                </NavLink>
+            </div>
 
-        <div class="nav-section">Categories</div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="categories">
-                <span class="icon">📁</span> Categories
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="categories/create">
-                <span class="icon">🏷️</span> New Category
-            </NavLink>
-        </div>
-
-        <div class="nav-section">Budgets</div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="budgets">
-                <span class="icon">📊</span> Budgets
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="budgets/create">
-                <span class="icon">🎯</span> Set Budget
-            </NavLink>
-        </div>
-
-        <div class="nav-section">Reports</div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="reports/monthly">
-                <span class="icon">📈</span> Monthly Report
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="reports/category">
-                <span class="icon">🥧</span> By Category
-            </NavLink>
-        </div>
-
-        <div class="nav-section">Account</div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="account/profile">
-                <span class="icon">👤</span> Profile
-            </NavLink>
-        </div>
+            <div class="user-section">
+                <div class="nav-item px-3">
+                    <div class="nav-link text-white-50 disabled">
+                        <span class="oi oi-person" aria-hidden="true"></span> @UserState.CurrentUserName
+                    </div>
+                </div>
+                <div class="nav-item px-3">
+                    <button class="nav-link btn btn-link text-start w-100 text-danger" @onclick="HandleLogout">
+                        <span class="oi oi-account-logout" aria-hidden="true"></span> Logout
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="login">
+                    <span class="oi oi-account-login" aria-hidden="true"></span> Login
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="register">
+                    <span class="oi oi-person" aria-hidden="true"></span> Register
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
+
+    protected override void OnInitialized()
+    {
+        UserState.OnChange += StateHasChanged;
+    }
+
+    private void HandleLogout()
+    {
+        UserState.Logout();
+        NavManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        UserState.OnChange -= StateHasChanged;
+    }
+}

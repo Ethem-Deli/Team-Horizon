@@ -1,105 +1,111 @@
 @page "/expenses/create"
-
 @using Microsoft.EntityFrameworkCore
-@using FamilyBudgetExpenseTracker.Data
 @using FamilyBudgetExpenseTracker.Models
-
+@using FamilyBudgetExpenseTracker.Services
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
-@inject NavigationManager Navigation
+@inject NavigationManager NavManager
 
-<h1>➕ Add New Expense</h1>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-4">➕ Add Expense</h3>
 
-@if (!string.IsNullOrWhiteSpace(error))
-{
-    <div class="alert alert-danger">@error</div>
-}
+                    @if (categories == null)
+                    {
+                        <p><em>Loading categories...</em></p>
+                    }
+                    else if (!categories.Any())
+                    {
+                        <div class="alert alert-warning">
+                            <p>You haven't created any categories yet! You need at least one category to record an expense.</p>
+                            <a href="/categories/create" class="btn btn-warning btn-sm">Create First Category</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <EditForm Model="expense" OnValidSubmit="HandleSubmit">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger small" />
 
-<form @onsubmit="OnSubmit" @onsubmit:preventDefault="true">
-    <div class="mb-3">
-        <label class="form-label">Amount:</label>
-        <input type="number" step="0.01" class="form-control" @bind="expense.Amount" />
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <InputText @bind-Value="expense.Description" class="form-control" placeholder="e.g., Grocery shopping" />
+                                <ValidationMessage For="@(() => expense.Description)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Amount ($)</label>
+                                <InputNumber @bind-Value="expense.Amount" class="form-control" />
+                                <ValidationMessage For="@(() => expense.Amount)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Date</label>
+                                <InputDate @bind-Value="expense.Date" class="form-control" />
+                                <ValidationMessage For="@(() => expense.Date)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <InputSelect @bind-Value="expense.CategoryId" class="form-control">
+                                    <option value="">-- Select Category --</option>
+                                    @foreach (var cat in categories)
+                                    {
+                                        <option value="@cat.Id">@cat.Icon @cat.Name</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => expense.CategoryId)" />
+                            </div>
+
+                            <div class="d-flex gap-2 pt-3">
+                                <button type="submit" class="btn btn-primary px-4">Save Expense</button>
+                                <a href="/expenses" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </EditForm>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="mb-3">
-        <label class="form-label">Date:</label>
-        <input type="date" class="form-control" @bind="expense.Date" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Description:</label>
-        <input class="form-control" @bind="expense.Description" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Category:</label>
-        <select class="form-control" @bind="expense.CategoryId">
-            <option value="0">Select a category...</option>
-            @foreach (var category in categories)
-            {
-                <option value="@category.Id">@category.Icon @category.Name</option>
-            }
-        </select>
-    </div>
-
-    <div>
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a href="/expenses" class="btn btn-secondary">Cancel</a>
-    </div>
-</form>
+</div>
 
 @code {
-    private Expense expense = new Expense();
-    private List<Category> categories = new();
-    private string? error;
-
-    // HTML date input uses yyyy-MM-dd format
-    private string dateString = DateTime.Today.ToString("yyyy-MM-dd");
+    private Expense expense = new() { Date = DateTime.Today };
+    private List<Category>? categories;
 
     protected override async Task OnInitializedAsync()
     {
-        expense.Date = DateTime.Today;
-
+        // 1. Fetch categories specific to this user
         categories = await DbContext.Categories
-        .Where(c => c.UserId == UserState.CurrentUserId)
-        .OrderBy(c => c.Name)
-        .ToListAsync();
+            .Where(c => c.UserId == UserState.CurrentUserId)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+
+        // 2. Pre-select the first category if available
+        if (categories.Any())
+        {
+            expense.CategoryId = categories.First().Id;
+        }
     }
 
-    private async Task OnSubmit()
+    private async Task HandleSubmit()
     {
-        // Manual validation (since we are not using EditForm/DataAnnotationsValidator)
-        if (expense.Amount <= 0)
+        try 
         {
-            error = "Amount must be greater than 0.";
-            return;
-        }
+            // Ensure the UserId is set before saving
+            expense.UserId = UserState.CurrentUserId;
 
-        if (string.IsNullOrWhiteSpace(expense.Description))
+            DbContext.Expenses.Add(expense);
+            await DbContext.SaveChangesAsync();
+            
+            NavManager.NavigateTo("/expenses");
+        }
+        catch (Exception ex)
         {
-            error = "Description is required.";
-            return;
+            Console.WriteLine($"Error saving expense: {ex.Message}");
         }
-
-        if (expense.CategoryId <= 0)
-        {
-            error = "Please select a category.";
-            return;
-        }
-
-        if (!DateTime.TryParse(dateString, out var parsedDate))
-        {
-            error = "Please enter a valid date.";
-            return;
-        }
-
-        expense.Date = parsedDate;
-        expense.UserId = UserState.CurrentUserId;
-
-        error = null;
-
-        DbContext.Expenses.Add(expense);
-        await DbContext.SaveChangesAsync();
-        Navigation.NavigateTo("/expenses");
     }
 }

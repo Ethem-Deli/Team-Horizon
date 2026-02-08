@@ -1,111 +1,208 @@
 @page "/"
 @using Microsoft.EntityFrameworkCore
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
+@implements IDisposable
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
+@inject NavigationManager Navigation
 
-<h1>📊 Dashboard</h1>
+<PageTitle>Dashboard - Family Budget Tracker</PageTitle>
 
-<div class="row">
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5>💳 Total Expenses</h5>
-                <h2>$@totalExpenses.ToString("N2")</h2>
-                <small>This month</small>
+@if (!UserState.IsAuthenticated)
+{
+    @* --- FULL VIEW LANDING PAGE (Not Logged In) --- *@
+    <div class="container-fluid d-flex flex-column justify-content-center bg-white" style="min-height: 90vh;">
+
+        @* Hero Section *@
+        <div class="container">
+            <div class="row align-items-center mb-5">
+                <div class="col-lg-6 pr-lg-5">
+                    <h1 class="display-2 fw-bold text-dark mb-3" style="letter-spacing: -2px; line-height: 1.1;">
+                        Master Your <span class="text-primary">Money.</span>
+                    </h1>
+                    <p class="lead text-muted mb-5 fs-4">
+                        Track expenses, set family budgets, and gain insights into your spending habits with our easy-to-use
+                        platform.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="/login" class="btn btn-primary btn-lg px-5 py-3 fw-bold shadow">Get Started Now</a>
+                        <a href="/register" class="btn btn-outline-dark btn-lg px-5 py-3 fw-bold">Create Account</a>
+                    </div>
+                </div>
+                <div class="col-lg-6 d-none d-lg-flex justify-content-center">
+                    <div class="position-relative">
+                        <div class="bg-primary opacity-10 position-absolute rounded-circle"
+                             style="width: 500px; height: 500px; top: -50px; left: -50px; z-index: 0;"></div>
+                        <span style="font-size: 240px; position: relative; z-index: 1;">💰</span>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5>📊 Budget</h5>
-                <h2>$@monthlyBudget.ToString("N2")</h2>
-                <small>Monthly limit</small>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5>💰 Remaining</h5>
-                <h2>$@remainingBudget.ToString("N2")</h2>
-                @if (monthlyBudget > 0)
-                {
-                    <small>@percentLeft% left</small>
-                }
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5>📁 Categories</h5>
-                <h2>@categoryCount</h2>
-                <small>Active categories</small>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <h5>Recent Expenses</h5>
-
-                @if (recentExpenses.Any())
-                {
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Category</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var expense in recentExpenses)
-                            {
-                                <tr>
-                                    <td>@expense.Date.ToString("MMM dd")</td>
-                                    <td>@expense.Description</td>
-                                    <td>
-                                        @(expense.Category?.Icon ?? "")
-                                        @(expense.Category?.Name ?? "Uncategorized")
-                                    </td>
-                                    <td>$@expense.Amount.ToString("N2")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-                    <p>No expenses yet.</p>
-                }
-
-                <a href="/expenses" class="btn btn-primary">View All</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5>Quick Actions</h5>
-                <div class="d-grid gap-2">
-                    <a href="/expenses/create" class="btn btn-success">➕ Add Expense</a>
-                    <a href="/categories/create" class="btn btn-info">📁 New Category</a>
-                    <a href="/budgets/create" class="btn btn-warning">📊 Set Budget</a>
+            @* Feature Snippet - Arranged in Row and Styled *@
+            <div class="row mt-5 pt-5 text-center border-top">
+                <div class="col-md-4 mb-4">
+                    <div class="p-4 h-100 rounded-3 hover-shadow transition">
+                        <h3 class="fw-bold mb-3">🔒 Secure</h3>
+                        <p class="text-muted">Your financial data is encrypted and private to your account.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="p-4 h-100 rounded-3 hover-shadow transition">
+                        <h3 class="fw-bold mb-3">📊 Visual</h3>
+                        <p class="text-muted">Easy-to-read reports and progress bars to keep you on track.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="p-4 h-100 rounded-3 hover-shadow transition">
+                        <h3 class="fw-bold mb-3">👨‍👩‍👧‍👦 Family First</h3>
+                        <p class="text-muted">Designed for households to manage shared goals together.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+}
+else
+{
+    @* --- DASHBOARD VIEW (Authenticated) --- *@
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+            <div>
+                <h1 class="fw-bold mb-0">📊 Dashboard</h1>
+                <p class="text-muted mb-0">Overview for @DateTime.Today.ToString("MMMM yyyy")</p>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-light text-dark border p-2 px-3">
+                    <i class="oi oi-person me-2"></i> @UserState.CurrentUserName
+                </span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            @* Summary Cards *@
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-muted text-uppercase small mb-0">Spent</h6>
+                            <span class="text-primary">💳</span>
+                        </div>
+                        <h2 class="fw-bold">$@totalExpenses.ToString("N2")</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-muted text-uppercase small mb-0">Budget</h6>
+                            <span class="text-info">📊</span>
+                        </div>
+                        <h2 class="fw-bold">$@monthlyBudget.ToString("N2")</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-muted text-uppercase small mb-0">Remaining</h6>
+                            <span class="@(remainingBudget < 0 ? "text-danger" : "text-success")">💰</span>
+                        </div>
+                        <h2 class="fw-bold @(remainingBudget < 0 ? "text-danger" : "text-success")">
+                            $@remainingBudget.ToString("N2")
+                        </h2>
+                        @if (monthlyBudget > 0)
+                        {
+                            <div class="progress mt-2" style="height: 4px;">
+                                <div class="progress-bar @(percentLeft < 20 ? "bg-danger" : "bg-success")"
+                                     style="width: @percentLeft%"></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-muted text-uppercase small mb-0">Categories</h6>
+                            <span class="text-warning">📁</span>
+                        </div>
+                        <h2 class="fw-bold">@categoryCount</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4 g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold">Recent Expenses</h5>
+                        <a href="/expenses" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        @if (recentExpenses.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <tbody>
+                                        @foreach (var expense in recentExpenses)
+                                        {
+                                            <tr>
+                                                <td style="width: 80px;">
+                                                    <div class="text-center p-1 rounded bg-light">
+                                                        <div class="small fw-bold">@expense.Date.ToString("MMM")</div>
+                                                        <div class="h5 mb-0">@expense.Date.ToString("dd")</div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-bold">@expense.Description</div>
+                                                    <span class="small text-muted">@expense.Category?.Name</span>
+                                                </td>
+                                                <td class="text-end fw-bold">$@expense.Amount.ToString("N2")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <p class="text-muted">No expenses found for this month.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold">Quick Actions</h5>
+                    </div>
+                    <div class="card-body d-grid gap-3">
+                        <a href="/expenses/create" class="btn btn-primary py-3">
+                            ➕ Add Expense
+                        </a>
+                        <a href="/categories/create" class="btn btn-outline-info py-3">
+                            📁 New Category
+                        </a>
+                        <a href="/budgets/create" class="btn btn-outline-warning py-3">
+                            📊 Set Budget
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private decimal totalExpenses;
@@ -113,51 +210,42 @@
     private decimal remainingBudget => monthlyBudget - totalExpenses;
     private int categoryCount;
     private List<Expense> recentExpenses = new();
-    @* private int percentLeft => monthlyBudget > 0 ? (int)((1 - (totalExpenses / monthlyBudget)) * 100) : 0; *@
     private int percentLeft;
 
     protected override async Task OnInitializedAsync()
     {
-        var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        UserState.OnChange += HandleStateChange;
+        if (UserState.IsAuthenticated) await LoadDashboardData();
+    }
 
+    private async void HandleStateChange()
+    {
+        if (UserState.IsAuthenticated) await LoadDashboardData();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadDashboardData()
+    {
+        var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
         var expenses = await DbContext.Expenses
-        .Where(e => e.UserId == UserState.CurrentUserId && e.Date >= startOfMonth)
-        .ToListAsync();
+            .Where(e => e.UserId == UserState.CurrentUserId && e.Date >= startOfMonth)
+            .ToListAsync();
 
         totalExpenses = expenses.Sum(e => e.Amount);
 
         var budget = await DbContext.Budgets
-        .FirstOrDefaultAsync(b =>
-        b.UserId == UserState.CurrentUserId &&
-        b.Month == DateTime.Today.Month &&
-        b.Year == DateTime.Today.Year);
+            .FirstOrDefaultAsync(b => b.UserId == UserState.CurrentUserId && b.Month == DateTime.Today.Month && b.Year ==
+DateTime.Today.Year);
 
         monthlyBudget = budget?.Amount ?? 0m;
+        percentLeft = monthlyBudget > 0m ? (int)Math.Max(0, Math.Min(100, Math.Round((1 - (totalExpenses / monthlyBudget)) *
+100m))) : 0;
 
-        // Safe percent calculation (no divide by zero)
-        if (monthlyBudget > 0m)
-        {
-            var ratioLeft = 1m - (totalExpenses / monthlyBudget);
-            percentLeft = (int)Math.Round(ratioLeft * 100m);
-
-            // clamp to a sensible range
-            if (percentLeft < 0) percentLeft = 0;
-            if (percentLeft > 100) percentLeft = 100;
-        }
-        else
-        {
-            percentLeft = 0;
-        }
-
-        categoryCount = await DbContext.Categories
-        .Where(c => c.UserId == UserState.CurrentUserId)
-        .CountAsync();
-
-        recentExpenses = await DbContext.Expenses
-        .Include(e => e.Category)
-        .Where(e => e.UserId == UserState.CurrentUserId)
-        .OrderByDescending(e => e.Date)
-        .Take(5)
-        .ToListAsync();
+        categoryCount = await DbContext.Categories.Where(c => c.UserId == UserState.CurrentUserId).CountAsync();
+        recentExpenses = await DbContext.Expenses.Include(e => e.Category)
+            .Where(e => e.UserId == UserState.CurrentUserId)
+            .OrderByDescending(e => e.Date).Take(5).ToListAsync();
     }
+
+    public void Dispose() => UserState.OnChange -= HandleStateChange;
 }

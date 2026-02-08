@@ -1,32 +1,29 @@
+using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace FamilyBudgetExpenseTracker.Models;
-
-public class Expense
+namespace FamilyBudgetExpenseTracker.Models
 {
-    [Key]
-    public int Id { get; set; }
+    public class Expense
+    {
+        public int Id { get; set; }
 
-    [Required]
-    [Column(TypeName = "decimal(10,2)")]
-    public decimal Amount { get; set; }
+        [Required]
+        [Range(0.01, 10000000)]
+        public decimal Amount { get; set; }
 
-    [Required]
-    public DateTime Date { get; set; } = DateTime.Today;
+        [Required]
+        public string Description { get; set; } = string.Empty;
 
-    [StringLength(250)]
-    public string Description { get; set; } = string.Empty;
+        public DateTime Date { get; set; } = DateTime.Now;
 
-    // ---------- Foreign Keys ----------
-    [Required]
-    public int UserId { get; set; }
+        // Foreign Key to Category
+        [Required]
+        public int CategoryId { get; set; }
+        public Category? Category { get; set; }
 
-    [Required]
-    public int CategoryId { get; set; }
-
-    // ---------- Navigation Properties ----------
-    public User? User { get; set; }
-
-    public Category? Category { get; set; }
+        // Foreign Key to User
+        [Required]
+        public int UserId { get; set; }
+        public User? User { get; set; }
+    }
 }

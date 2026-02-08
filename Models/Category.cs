@@ -1,30 +1,34 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace FamilyBudgetExpenseTracker.Models;
-
-public class Category
+namespace FamilyBudgetExpenseTracker.Models
 {
-    [Key]
-    public int Id { get; set; }
+    public class Category
+    {
+        [Key]
+        public int Id { get; set; }
 
-    [Required]
-    [StringLength(100)]
-    public string Name { get; set; } = string.Empty;
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
 
-    [StringLength(250)]
-    public string? Description { get; set; }
+        [StringLength(250)]
+        public string? Description { get; set; }
 
-    [StringLength(7)]
-    public string ColorCode { get; set; } = "#3498db";
+        [StringLength(7)]
+        public string ColorCode { get; set; } = "#3498db";
 
-    [StringLength(5)]
-    public string Icon { get; set; } = "📁";
+        [StringLength(10)] // Increased slightly for complex emojis
+        public string Icon { get; set; } = "📁";
 
-    // Foreign key
-    [Required]
-    public int UserId { get; set; }
+        // Foreign key to User
+        [Required]
+        public int UserId { get; set; }
 
-    // Navigation properties
-    public User? User { get; set; }
-    public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+        // Navigation properties
+        public User? User { get; set; }
+
+        // One Category can have many Expenses
+        public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+    }
 }

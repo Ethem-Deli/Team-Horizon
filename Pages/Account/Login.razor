@@ -1,0 +1,91 @@
+@page "/login"
+@using FamilyBudgetExpenseTracker.Data
+@using FamilyBudgetExpenseTracker.Services
+@using Microsoft.EntityFrameworkCore
+@using FamilyBudgetExpenseTracker.Security
+@inject ApplicationDbContext DbContext
+@inject UserState UserState
+@inject NavigationManager NavManager
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            @if (isRegistered)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    Registration successful! Please login.
+                </div>
+            }
+
+            <div class="card shadow border-0 mt-5">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Login</h2>
+
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input @bind="username" class="form-control" placeholder="Username" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" @bind="password" class="form-control" placeholder="Password" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(error))
+                    {
+                        <div class="alert alert-danger py-2">@error</div>
+                    }
+
+                    <button @onclick="HandleLogin" class="btn btn-primary w-100 py-2">Sign In</button>
+
+                    <div class="text-center mt-3">
+                        <small>Need an account? <a href="/register" class="text-decoration-none">Register
+                            here</a></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@code {
+    private string username = "";
+    private string password = "";
+    private string? error;
+    private bool isRegistered;
+
+    protected override void OnInitialized()
+    {
+        // Check if redirected from registration
+        var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+        if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("registered", out var _))
+        {
+            isRegistered = true;
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        error = null;
+
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+        {
+            error = "Please enter both username and password.";
+            return;
+        }
+
+        // Find user by username
+        var user = await DbContext.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
+
+        // Verify hash using the updated Security namespace method
+        if (user != null && PasswordHasher.Verify(password, user.PasswordHash))
+        {
+            UserState.Login(user);
+            NavManager.NavigateTo("/");
+        }
+        else
+        {
+            error = "Invalid username or password.";
+        }
+    }
+}

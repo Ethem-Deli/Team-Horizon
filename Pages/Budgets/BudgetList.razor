@@ -81,10 +81,11 @@ else
             var startDate = new DateTime(budget.Year, budget.Month, 1);
             var endDate = startDate.AddMonths(1);
 
-            var spent = await DbContext.Expenses
+            var spent1 = await DbContext.Expenses
             .Where(e => e.UserId == UserState.CurrentUserId && e.Date >= startDate && e.Date < endDate)
-            .SumAsync(e => e.Amount);
+            .ToListAsync();
 
+            var spent = spent1.Sum(e => e.Amount);
             spentAmounts[budget.Id] = spent;
         }
     }

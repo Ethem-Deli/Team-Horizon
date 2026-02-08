@@ -1,51 +1,112 @@
 @page "/budgets/create"
+@using Microsoft.EntityFrameworkCore
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
 @inject NavigationManager Navigation
 
 <PageTitle>Set Budget</PageTitle>
 
-<h1>📊 Set New Budget</h1>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-4">📊 Set New Budget</h3>
 
-<EditForm Model="@budget" OnValidSubmit="HandleSubmit">
-    <div class="mb-3">
-        <label>Month:</label>
-        <InputSelect @bind-Value="budget.Month" class="form-control">
-            @for (int i = 1; i <= 12; i++)
-            {
-                <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
-            }
-        </InputSelect>
-    </div>
+                    <EditForm Model="@budget" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger small" />
 
-    <div class="mb-3">
-        <label>Year:</label>
-        <InputNumber @bind-Value="budget.Year" class="form-control" />
-    </div>
+                        <div class="mb-3">
+                            <label class="form-label">Month</label>
+                            <InputSelect @bind-Value="budget.Month" class="form-control">
+                                @for (int i = 1; i <= 12; i++)
+                                {
+                                    <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
+                                }
+                            </InputSelect>
+                        </div>
 
-    <div class="mb-3">
-        <label>Budget Amount:</label>
-        <InputNumber @bind-Value="budget.Amount" class="form-control" />
-    </div>
+                        <div class="mb-3">
+                            <label class="form-label">Year</label>
+                            <InputNumber @bind-Value="budget.Year" class="form-control" />
+                        </div>
 
-    <div>
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a href="/budgets" class="btn btn-secondary">Cancel</a>
+                        <div class="mb-3">
+                            <label class="form-label">Budget Amount ($)</label>
+                            <InputNumber @bind-Value="budget.Amount" class="form-control" placeholder="0.00" />
+                            <ValidationMessage For="@(() => budget.Amount)" />
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger">@errorMessage</div>
+                        }
+
+                        <div class="d-flex gap-2 pt-3">
+                            <button type="submit" class="btn btn-primary px-4" disabled="@isSaving">
+                                @(isSaving ? "Saving..." : "Save Budget")
+                            </button>
+                            <a href="/budgets" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
     </div>
-</EditForm>
+</div>
 
 @code {
     private Budget budget = new Budget
     {
         Month = DateTime.Today.Month,
-        Year = DateTime.Today.Year
+        Year = DateTime.Today.Year,
+        Amount = 0m
     };
+
+    private bool isSaving = false;
+    private string? errorMessage;
 
     private async Task HandleSubmit()
     {
-        budget.UserId = UserState.CurrentUserId;
-        DbContext.Budgets.Add(budget);
-        await DbContext.SaveChangesAsync();
-        Navigation.NavigateTo("/budgets");
+        if (isSaving) return;
+        isSaving = true;
+        errorMessage = null;
+
+        try
+        {
+            // 1. Assign current user
+            budget.UserId = UserState.CurrentUserId;
+
+            // 2. Optional: Check if a budget already exists for this month/year
+            var existing = await DbContext.Budgets
+                .FirstOrDefaultAsync(b => b.UserId == budget.UserId
+                                     && b.Month == budget.Month
+                                     && b.Year == budget.Year);
+
+            if (existing != null)
+            {
+                // Update existing instead of creating new
+                existing.Amount = budget.Amount;
+                DbContext.Budgets.Update(existing);
+            }
+            else
+            {
+                DbContext.Budgets.Add(budget);
+            }
+
+            await DbContext.SaveChangesAsync();
+
+            // 3. Navigate away
+            Navigation.NavigateTo("/budgets");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Could not save budget. Ensure all fields are valid.";
+            isSaving = false;
+            Console.WriteLine($"Budget Error: {ex.Message}");
+        }
     }
 }

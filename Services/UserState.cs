@@ -1,8 +1,31 @@
-namespace FamilyBudgetExpenseTracker.Services;
+using System;
+using FamilyBudgetExpenseTracker.Models;
 
-public class UserState
+namespace FamilyBudgetExpenseTracker.Services
 {
-    public int CurrentUserId { get; set; } = 1; // Demo user ID
-    public string CurrentUserName { get; set; } = "Demo User";
-    public bool IsAuthenticated { get; set; } = true; // For demo purposes
+    public class UserState
+    {
+        // The core session data
+        public User? CurrentUser { get; private set; } = null;
+        public bool IsAuthenticated => CurrentUser != null;
+        public int CurrentUserId => CurrentUser?.Id ?? 0;
+        public string CurrentUserName => CurrentUser?.FullName ?? "Guest";
+
+        // Event for UI components to listen for (e.g., NavMenu)
+        public event Action? OnChange;
+
+        public void Login(User user)
+        {
+            CurrentUser = user;
+            NotifyStateChanged();
+        }
+
+        public void Logout()
+        {
+            CurrentUser = null;
+            NotifyStateChanged();
+        }
+
+        private void NotifyStateChanged() => OnChange?.Invoke();
+    }
 }
