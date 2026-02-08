@@ -6,7 +6,7 @@
 @using FamilyBudgetExpenseTracker.Models
 
 @inject ApplicationDbContext DbContext
-@inject NavigationManager Navigation
+@inject NavigationManager NavManager
 @inject UserState UserState
 
 <h1>✏️ Edit Expense</h1>
@@ -76,6 +76,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+
         // Only allow editing current user's expense
         expense = await DbContext.Expenses
         .FirstOrDefaultAsync(e => e.Id == Id && e.UserId == UserState.CurrentUserId);
@@ -98,7 +99,7 @@ else
     {
         if (expense == null)
         {
-            Navigation.NavigateTo("/expenses");
+            NavManager.NavigateTo("/expenses");
             return;
         }
 
@@ -132,12 +133,12 @@ else
         // Safety check: still the current user's expense
         if (expense.UserId != UserState.CurrentUserId)
         {
-            Navigation.NavigateTo("/expenses");
+            NavManager.NavigateTo("/expenses");
             return;
         }
 
         error = null;
         await DbContext.SaveChangesAsync();
-        Navigation.NavigateTo("/expenses");
+        NavManager.NavigateTo("/expenses");
     }
 }

@@ -2,6 +2,7 @@
 @using Microsoft.EntityFrameworkCore;
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
+@inject ICategoryService CategoryService
 @inject NavigationManager Navigation
 
 <PageTitle>Categories</PageTitle>
@@ -51,19 +52,31 @@ else
 
     private async Task LoadCategories()
     {
-        categories = await DbContext.Categories
+        if (UserState.CurrentUserId == 0)
+        {
+            categories = new List<Category>();
+            return;
+        }
+        categories = await CategoryService.GetUserCategoriesAsync(UserState.CurrentUserId);
+        @* categories = await DbContext.Categories
         .Where(c => c.UserId == UserState.CurrentUserId)
-        .ToListAsync();
+        .ToListAsync(); *@
     }
-
     private async Task DeleteCategory(int id)
     {
-        var category = await DbContext.Categories.FindAsync(id);
+        if (UserState.CurrentUserId == 0)
+        {
+            return;
+        }
+        await CategoryService.DeleteCategoryAsync(id, UserState.CurrentUserId);
+        await LoadCategories();
+    }
+    @* var category = await DbContext.Categories.FindAsync(id);
         if (category != null)
         {
             DbContext.Categories.Remove(category);
             await DbContext.SaveChangesAsync();
             await LoadCategories();
-        }
-    }
+        } *@
+}
 }

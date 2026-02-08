@@ -13,17 +13,13 @@ namespace FamilyBudgetExpenseTracker.Services
             _db = db;
         }
 
-        public async Task<Budget?> GetBudgetAsync(int userId, int year, int month)
+        // Implementation for GetBudgetForMonthAsync
+        public async Task<Budget?> GetBudgetForMonthAsync(int userId, int year, int month)
         {
             return await _db.Budgets
                 .FirstOrDefaultAsync(b => b.UserId == userId && b.Year == year && b.Month == month);
         }
 
-        public async Task<Budget?> GetBudgetForMonthAsync(int userId, int month, int year)
-        {
-            return await _db.Budgets
-                .FirstOrDefaultAsync(b => b.UserId == userId && b.Month == month && b.Year == year);
-        }
         public async Task<List<Budget>> GetUserBudgetsAsync(int userId)
         {
             return await _db.Budgets
@@ -35,7 +31,7 @@ namespace FamilyBudgetExpenseTracker.Services
 
         public async Task<bool> UpsertBudgetAsync(Budget budget)
         {
-            var existing = await GetBudgetAsync(budget.UserId, budget.Year, budget.Month);
+            var existing = await GetBudgetForMonthAsync(budget.UserId, budget.Year, budget.Month);
 
             if (existing != null)
             {
@@ -47,6 +43,17 @@ namespace FamilyBudgetExpenseTracker.Services
                 _db.Budgets.Add(budget);
             }
 
+            return await _db.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> DeleteBudgetAsync(int budgetId, int userId)
+        {
+            var budget = await _db.Budgets
+                .FirstOrDefaultAsync(b => b.Id == budgetId && b.UserId == userId);
+
+            if (budget == null) return false;
+
+            _db.Budgets.Remove(budget);
             return await _db.SaveChangesAsync() > 0;
         }
     }

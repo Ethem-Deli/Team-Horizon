@@ -22,21 +22,24 @@ namespace FamilyBudgetExpenseTracker.Services
                 .ToListAsync();
         }
 
+        // Implementation for GetRecentExpensesAsync(int userId)
         public async Task<List<Expense>> GetRecentExpensesAsync(int userId)
         {
             return await _db.Expenses
                 .Include(e => e.Category)
                 .Where(e => e.UserId == userId)
                 .OrderByDescending(e => e.Date)
-                .Take(5)
+                .Take(5) // Default to 5 most recent
                 .ToListAsync();
         }
 
-        public async Task<decimal> GetTotalExpensesForMonthAsync(int userId, DateTime month)
+        // Implementation for GetTotalExpensesForMonthAsync(int userId, DateTime date)
+        public async Task<decimal> GetTotalExpensesForMonthAsync(int userId, DateTime date)
         {
-            // Fetch to list first to avoid SQLite decimal sum issues
             var expenses = await _db.Expenses
-                .Where(e => e.UserId == userId && e.Date.Year == month.Year && e.Date.Month == month.Month)
+                .Where(e => e.UserId == userId &&
+                            e.Date.Year == date.Year &&
+                            e.Date.Month == date.Month)
                 .ToListAsync();
 
             return expenses.Sum(e => e.Amount);
@@ -44,16 +47,24 @@ namespace FamilyBudgetExpenseTracker.Services
 
         public async Task<bool> AddExpenseAsync(Expense expense)
         {
-            try
-            {
-                _db.Expenses.Add(expense);
-                await _db.SaveChangesAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            _db.Expenses.Add(expense);
+            return await _db.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> UpdateExpenseAsync(Expense expense, int userId)
+        {
+            var existing = await _db.Expenses
+                .FirstOrDefaultAsync(e => e.Id == expense.Id && e.UserId == userId);
+
+            if (existing == null) return false;
+
+            existing.Amount = expense.Amount;
+            existing.Description = expense.Description;
+            existing.Date = expense.Date;
+            existing.CategoryId = expense.CategoryId;
+
+            _db.Expenses.Update(existing);
+            return await _db.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> DeleteExpenseAsync(int expenseId, int userId)
@@ -64,8 +75,7 @@ namespace FamilyBudgetExpenseTracker.Services
             if (expense == null) return false;
 
             _db.Expenses.Remove(expense);
-            await _db.SaveChangesAsync();
-            return true;
+            return await _db.SaveChangesAsync() > 0;
         }
     }
 }

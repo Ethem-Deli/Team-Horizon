@@ -1,6 +1,8 @@
 @page "/budgets"
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
+@inject IBudgetService BudgetService
+@inject IExpenseService ExpenseService
 @inject UserState UserState
 
 <PageTitle>Budgets</PageTitle>
@@ -69,11 +71,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        budgets = await DbContext.Budgets
-        .Where(b => b.UserId == UserState.CurrentUserId)
-        .OrderByDescending(b => b.Year)
-        .ThenByDescending(b => b.Month)
-        .ToListAsync();
+
+        budgets = await BudgetService.GetUserBudgetsAsync(UserState.CurrentUserId);
 
         // Calculate spent amounts
         foreach (var budget in budgets)
@@ -81,12 +80,10 @@ else
             var startDate = new DateTime(budget.Year, budget.Month, 1);
             var endDate = startDate.AddMonths(1);
 
-            var spent1 = await DbContext.Expenses
-            .Where(e => e.UserId == UserState.CurrentUserId && e.Date >= startDate && e.Date < endDate)
-            .ToListAsync();
 
-            var spent = spent1.Sum(e => e.Amount);
-            spentAmounts[budget.Id] = spent;
+            var spent1 = await ExpenseService.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startDate);
+            @* var spent = spent1.Sum(e => e.Amount); *@
+            spentAmounts[budget.Id] = spent1;
         }
     }
 

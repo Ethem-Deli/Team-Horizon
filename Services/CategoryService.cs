@@ -28,9 +28,32 @@ namespace FamilyBudgetExpenseTracker.Services
                 .CountAsync();
         }
 
+        // NEW: Method to retrieve a single category for editing
+        public async Task<Category?> GetCategoryByIdAsync(int id, int userId)
+        {
+            return await _db.Categories
+                .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+        }
+
         public async Task<bool> AddCategoryAsync(Category category)
         {
             _db.Categories.Add(category);
+            return await _db.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> UpdateCategoryAsync(Category category, int userId)
+        {
+            var existing = await _db.Categories
+                .FirstOrDefaultAsync(c => c.Id == category.Id && c.UserId == userId);
+
+            if (existing == null) return false;
+
+            existing.Name = category.Name;
+            existing.Description = category.Description;
+            existing.ColorCode = category.ColorCode;
+            existing.Icon = category.Icon;
+
+            _db.Categories.Update(existing);
             return await _db.SaveChangesAsync() > 0;
         }
 
