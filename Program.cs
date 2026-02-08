@@ -18,6 +18,9 @@ builder.Services.AddScoped<MonthlyReportService>();
 
 // FIX: Register the new Authentication Service
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IExpenseService, ExpenseService>();
+builder.Services.AddScoped<IBudgetService, BudgetService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 // Auth core for UI
 builder.Services.AddAuthorizationCore();

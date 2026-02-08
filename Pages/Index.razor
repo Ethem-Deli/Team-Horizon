@@ -2,10 +2,15 @@
 @using Microsoft.EntityFrameworkCore
 @using FamilyBudgetExpenseTracker.Models
 @using FamilyBudgetExpenseTracker.Services
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
 @implements IDisposable
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
 @inject NavigationManager Navigation
+@inject IExpenseService ExpenseSvc
+@inject IBudgetService BudgetSvc
+@inject ICategoryService CategorySvc
 
 <PageTitle>Dashboard - Family Budget Tracker</PageTitle>
 
@@ -227,24 +232,15 @@ else
     private async Task LoadDashboardData()
     {
         var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-        var expenses = await DbContext.Expenses
-            .Where(e => e.UserId == UserState.CurrentUserId && e.Date >= startOfMonth)
-            .ToListAsync();
-
-        totalExpenses = expenses.Sum(e => e.Amount);
-
-        var budget = await DbContext.Budgets
-            .FirstOrDefaultAsync(b => b.UserId == UserState.CurrentUserId && b.Month == DateTime.Today.Month && b.Year ==
-DateTime.Today.Year);
-
+        totalExpenses = await ExpenseSvc.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startOfMonth);
+        var budget = await BudgetSvc.GetBudgetForMonthAsync(UserState.CurrentUserId, DateTime.Today.Month, DateTime.Today.Year);
         monthlyBudget = budget?.Amount ?? 0m;
+
         percentLeft = monthlyBudget > 0m ? (int)Math.Max(0, Math.Min(100, Math.Round((1 - (totalExpenses / monthlyBudget)) *
 100m))) : 0;
 
-        categoryCount = await DbContext.Categories.Where(c => c.UserId == UserState.CurrentUserId).CountAsync();
-        recentExpenses = await DbContext.Expenses.Include(e => e.Category)
-            .Where(e => e.UserId == UserState.CurrentUserId)
-            .OrderByDescending(e => e.Date).Take(5).ToListAsync();
+        categoryCount = await CategorySvc.GetCategoryCountAsync(UserState.CurrentUserId);
+        recentExpenses = await ExpenseSvc.GetRecentExpensesAsync(UserState.CurrentUserId);
     }
 
     public void Dispose() => UserState.OnChange -= HandleStateChange;

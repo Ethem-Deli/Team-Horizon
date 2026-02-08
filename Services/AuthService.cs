@@ -21,19 +21,27 @@ namespace FamilyBudgetExpenseTracker.Services
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return null;
 
-            // 1. Fetch user by username (case-insensitive)
+            // We fetch the user first
             var user = await _db.Users.FirstOrDefaultAsync(u =>
                 u.Username.ToLower() == username.ToLower());
 
-            // 2. Verify password hash
+            // We verify. If either fails, we return null. 
+            // The UI will handle this by showing a generic "Invalid credentials" message.
             if (user != null && PasswordHasher.Verify(password, user.PasswordHash))
             {
-                // 3. Update the global session state
                 _userState.Login(user);
                 return user;
             }
 
             return null;
+        }
+
+        public async Task<bool> UserExistsAsync(string username, string email)
+        {
+            // Check both username and email for duplicates
+            return await _db.Users.AnyAsync(u =>
+                u.Username.ToLower() == username.ToLower() ||
+                u.Email.ToLower() == email.ToLower());
         }
 
         public void Logout()

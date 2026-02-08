@@ -1,10 +1,13 @@
 @page "/register"
 @using FamilyBudgetExpenseTracker.Data
 @using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Models.ViewModels
 @using FamilyBudgetExpenseTracker.Services
-@using Microsoft.EntityFrameworkCore
-@using System.ComponentModel.DataAnnotations
 @using FamilyBudgetExpenseTracker.Security
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
+@inject IAuthService AuthService
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
 
@@ -20,15 +23,13 @@
 
                         <div class="mb-3">
                             <label class="form-label">Full Name</label>
-                            <InputText @bind-Value="regModel.FullName" class="form-control"
-                                       placeholder="Enter your full name" />
+                            <InputText @bind-Value="regModel.FullName" class="form-control" />
                             <ValidationMessage For="@(() => regModel.FullName)" class="text-danger" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Email</label>
-                            <InputText @bind-Value="regModel.Email" class="form-control"
-                                       placeholder="you@example.com" />
+                            <InputText @bind-Value="regModel.Email" class="form-control" />
                             <ValidationMessage For="@(() => regModel.Email)" class="text-danger" />
                         </div>
 
@@ -42,26 +43,20 @@
                             <label class="form-label">Password</label>
                             <InputText @bind-Value="regModel.Password" type="password" class="form-control" />
                             <ValidationMessage For="@(() => regModel.Password)" class="text-danger" />
-                            <small class="text-muted">Minimum 6 characters</small>
                         </div>
 
                         @if (!string.IsNullOrEmpty(errorMessage))
                         {
-                            <div class="alert alert-danger">@errorMessage</div>
+                            <div class="alert alert-danger py-2 small">@errorMessage</div>
                         }
 
                         <button type="submit" class="btn btn-primary w-100 py-2 mt-2">Sign Up</button>
                     </EditForm>
-
-                    <div class="text-center mt-3">
-                        <p class="text-muted">Already have an account? <a href="/login"
-                                                                              class="text-decoration-none">Login</a></p>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
 @code {
     private RegisterViewModel regModel = new();
@@ -70,40 +65,37 @@
     private async Task HandleRegister()
     {
         errorMessage = null;
+
+        // Specific Feedback: Check if account exists before attempting to create
+        bool alreadyRegistered = await AuthService.UserExistsAsync(regModel.Username, regModel.Email);
+
+        if (alreadyRegistered)
+        {
+            errorMessage = "This username or email is already registered. Try logging in instead.";
+            return;
+        }
+
         try
         {
-            // Check if user already exists
-            var userExists = await DbContext.Users.AnyAsync(u =>
-                u.Username.ToLower() == regModel.Username.ToLower() ||
-                u.Email.ToLower() == regModel.Email.ToLower());
-
-            if (userExists)
-            {
-                errorMessage = "Username or Email is already registered.";
-                return;
-            }
-
-            // Map ViewModel to the User Model provided in context
             var newUser = new User
             {
                 FullName = regModel.FullName,
                 Email = regModel.Email,
                 Username = regModel.Username,
-                PasswordHash = PasswordHasher.HashPassword(regModel.Password), // Using the hashing service
+                PasswordHash = PasswordHasher.HashPassword(regModel.Password),
                 CreatedAt = DateTime.UtcNow
             };
 
             DbContext.Users.Add(newUser);
             await DbContext.SaveChangesAsync();
 
-            // Redirect to login with a success indicator
             NavManager.NavigateTo("/login?registered=true");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            errorMessage = "Registration failed. Please try again.";
-            Console.WriteLine($"Register Error: {ex.Message}");
+            errorMessage = "An error occurred while creating your account. Please try again.";
         }
     }
+
 
 }

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
 
-namespace FamilyBudgetExpenseTracker.Models;
+namespace FamilyBudgetExpenseTracker.Models.ViewModels;
 
 public class RegisterViewModel
 {
