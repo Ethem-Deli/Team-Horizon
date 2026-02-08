@@ -1,8 +1,8 @@
 @page "/login"
 @using FamilyBudgetExpenseTracker.Data
 @using FamilyBudgetExpenseTracker.Services
-@using Microsoft.EntityFrameworkCore
 @using FamilyBudgetExpenseTracker.Security
+@using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
 @inject NavigationManager NavManager
@@ -12,9 +12,7 @@
         <div class="col-md-4">
             @if (isRegistered)
             {
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    Registration successful! Please login.
-                </div>
+                <div class="alert alert-success">Registration successful! Please login.</div>
             }
 
             <div class="card shadow border-0 mt-5">
@@ -23,12 +21,13 @@
 
                     <div class="mb-3">
                         <label class="form-label">Username</label>
-                        <input @bind="username" class="form-control" placeholder="Username" />
+                        <input @bind="username" class="form-control" placeholder="Username" @bind:event="oninput" />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Password</label>
-                        <input type="password" @bind="password" class="form-control" placeholder="Password" />
+                        <input type="password" @bind="password" class="form-control" placeholder="Password"
+                               @bind:event="oninput" />
                     </div>
 
                     @if (!string.IsNullOrEmpty(error))
@@ -36,7 +35,10 @@
                         <div class="alert alert-danger py-2">@error</div>
                     }
 
-                    <button @onclick="HandleLogin" class="btn btn-primary w-100 py-2">Sign In</button>
+                    @* Button is disabled while processing to prevent the double-click/double-SELECT you saw in your logs *@
+                    <button @onclick="HandleLogin" class="btn btn-primary w-100 py-2" disabled="@isProcessing">
+                        @(isProcessing ? "Verifying..." : "Sign In")
+                    </button>
 
                     <div class="text-center mt-3">
                         <small>Need an account? <a href="/register" class="text-decoration-none">Register
@@ -53,12 +55,12 @@
     private string password = "";
     private string? error;
     private bool isRegistered;
+    private bool isProcessing;
 
     protected override void OnInitialized()
     {
-        // Check if redirected from registration
         var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
-        if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("registered", out var _))
+        if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).ContainsKey("registered"))
         {
             isRegistered = true;
         }
@@ -66,26 +68,45 @@
 
     private async Task HandleLogin()
     {
+        if (isProcessing) return;
+
         error = null;
+        isProcessing = true;
 
-        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+        try
         {
-            error = "Please enter both username and password.";
-            return;
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                error = "Please enter both credentials.";
+                isProcessing = false;
+                return;
+            }
+
+            // 1. Fetch user (This part is working in your logs)
+            var user = await DbContext.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
+
+            // 2. Verify password
+            if (user != null && PasswordHasher.Verify(password, user.PasswordHash))
+            {
+                // 3. Set Global State
+                UserState.Login(user);
+
+                // 4. Navigate (Ensuring variable name matches the @inject above)
+                NavManager.NavigateTo("/");
+            }
+            else
+            {
+                error = "Invalid username or password.";
+            }
         }
-
-        // Find user by username
-        var user = await DbContext.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
-
-        // Verify hash using the updated Security namespace method
-        if (user != null && PasswordHasher.Verify(password, user.PasswordHash))
+        catch (Exception ex)
         {
-            UserState.Login(user);
-            NavManager.NavigateTo("/");
+            error = "A system error occurred during login.";
+            Console.WriteLine($"LOGIN CRASH: {ex.Message}");
         }
-        else
+        finally
         {
-            error = "Invalid username or password.";
+            isProcessing = false;
         }
     }
 }
