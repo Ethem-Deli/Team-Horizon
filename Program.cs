@@ -12,24 +12,23 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite("Data Source=familybudget.db"));
 
-// Session state
+// Session & Financial Services
 builder.Services.AddScoped<UserState>();
 builder.Services.AddScoped<MonthlyReportService>();
 
-// Required for UI authentication views
+// FIX: Register the new Authentication Service
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Auth core for UI
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
-
-    // Only use HTTPS redirection in production to solve the "Failed to determine port" warning
-    app.UseHttpsRedirection();
 }
 
 app.UseStaticFiles();
@@ -38,7 +37,6 @@ app.UseRouting();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
-// Initialize database
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
