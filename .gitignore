@@ -1,25 +1,52 @@
-# Build output
+# NET / Visual Studio artifacts
 [Bb]in/
 [Oo]bj/
+global.json
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.ide/
 
-# Database files: Don't commit user data!
+# Visual Studio Code
+
+.vscode/
+.history/
+*.code-workspace
+
+.vs/
+.vscode/
+.idea/
+# Entity Framework and SQLite Database
+
+# We ignore the local database to prevent merge conflicts.
+
+# Each developer should have their own local instance.
+
 *.db
 *.db-shm
 *.db-wal
 familybudget.db
 
-# User secrets
+# Environment Settings and Secrets
+
+# Ignore development-specific settings and secrets
 appsettings.Development.json
 appsettings.Local.json
+UserSecrets/
+# Operating System Files
 
-# IDE files
-.vs/
-.vscode/
-.idea/
-
-# OS files
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Build Tools and Dependencies
+
+[Bb]uild/
+node_modules/
+.npm/
 
 # Logs
+
 *.log
+.clog
