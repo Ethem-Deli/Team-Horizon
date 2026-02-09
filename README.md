@@ -6,7 +6,7 @@
 1: Ethem Deli
 2: Mickael Randriamihaja
 3: Andrew Halisky
-4: Tafadzwa Chingore
+4: Tafadzwa B Chingore 
 5: Dominic Abah
 6: Tsitsi Mutsvedu
 
