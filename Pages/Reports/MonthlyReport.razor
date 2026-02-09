@@ -1,12 +1,15 @@
-@page "/reports/monthly"
+﻿@page "/reports/monthly"
 @using FamilyBudgetExpenseTracker.Models.ViewModels
 @using FamilyBudgetExpenseTracker.Services
 @inject MonthlyReportService ReportService
 @inject UserState UserState
+@inject IJSRuntime JS
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
 
 <PageTitle>Monthly Report - @(new DateTime(selectedYear, selectedMonth, 1).ToString("MMMM yyyy"))</PageTitle>
 
-<h1>📈 Monthly Report</h1>
+<h1>Monthly Report</h1>
 
 <div class="row mb-4 bg-light p-3 rounded">
     <div class="col-md-3">
@@ -93,6 +96,30 @@ else
         </div>
     </div>
 
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Category Split</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthly-category-pie" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Category Totals</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthly-category-bar" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <!-- Category Breakdown -->
         <div class="col-lg-5 mb-4">
@@ -165,11 +192,32 @@ else
     private int selectedMonth = DateTime.Today.Month;
     private int selectedYear = DateTime.Today.Year;
     private MonthlyReportViewModel? report;
+    private bool shouldRenderCharts;
 
     protected override async Task OnInitializedAsync()
     {
-        // Optional: Load current month on start
         await LoadReport();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (report == null || report.CategorySummaries.Count == 0)
+        {
+            return;
+        }
+
+        if (!shouldRenderCharts)
+        {
+            return;
+        }
+
+        shouldRenderCharts = false;
+
+        var labels = report.CategorySummaries.Select(c => c.CategoryName).ToArray();
+        var values = report.CategorySummaries.Select(c => (double)c.TotalSpent).ToArray();
+        var colors = BuildColors(labels.Length);
+
+        await JS.InvokeVoidAsync("reportsCharts.renderMonthly", labels, values, colors);
     }
 
     private async Task LoadReport()
@@ -179,5 +227,33 @@ else
         selectedYear,
         selectedMonth
         );
+
+        shouldRenderCharts = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static string[] BuildColors(int count)
+    {
+        var palette = new[]
+        {
+            "#2563eb",
+            "#10b981",
+            "#f59e0b",
+            "#ef4444",
+            "#7c3aed",
+            "#06b6d4",
+            "#1f2937",
+            "#22c55e",
+            "#e11d48",
+            "#0ea5e9"
+        };
+
+        var colors = new string[count];
+        for (var i = 0; i < count; i++)
+        {
+            colors[i] = palette[i % palette.Length];
+        }
+
+        return colors;
     }
 }
