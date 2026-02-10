@@ -1,4 +1,6 @@
 @page "/expenses/create"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @using Microsoft.EntityFrameworkCore
 @using FamilyBudgetExpenseTracker.Models
 @using FamilyBudgetExpenseTracker.Services

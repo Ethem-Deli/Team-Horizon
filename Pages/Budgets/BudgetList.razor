@@ -1,4 +1,6 @@
 @page "/budgets"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
 @inject IBudgetService BudgetService
