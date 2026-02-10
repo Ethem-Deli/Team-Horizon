@@ -1,0 +1,43 @@
+@page "/monthly-summary"
+@inject IExpenseService ExpenseService
+@inject UserState UserState
+
+<h3>Monthly Expense Summary</h3>
+
+<div class="mb-3">
+    <label class="form-label">Select Month & Year</label>
+    <InputDate @bind-Value="selectedMonth"               class="form-control" />
+</div>
+
+<button class="btn btn-primary" @onclick="LoadSummary">
+    Show Total
+</button>
+
+@if (total != null)
+{
+    <p class="mt-3">
+        Total expenses for <strong>@formattedDate</strong>:
+        <span class="text-success fw-bold">
+            @total.Value.ToString("C")
+        </span>
+    </p>
+}
+
+@code {
+    private DateTime? selectedMonth;
+    private decimal? total;
+    private string? formattedDate;
+
+    private async Task LoadSummary()
+    {
+        if (!UserState.IsAuthenticated || selectedMonth == null)
+            return;
+
+        DateTime dt = selectedMonth.Value;
+
+        formattedDate = dt.ToString("MMMM yyyy");
+
+        total = await ExpenseService
+            .GetTotalExpensesForMonthAsync(UserState.CurrentUserId, dt);
+    }
+}

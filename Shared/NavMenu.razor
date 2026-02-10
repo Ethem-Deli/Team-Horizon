@@ -45,6 +45,7 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
+        <!-- Home / Dashboard -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="oi @(UserState.IsAuthenticated ? "oi-dashboard" : "oi-home")" aria-hidden="true"></span>
@@ -54,28 +55,39 @@
 
         @if (UserState.IsAuthenticated)
         {
+            <!-- Expenses -->
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="expenses">
                     <span class="oi oi-list-rich" aria-hidden="true"></span> My Expenses
                 </NavLink>
             </div>
-            @* Added Categories link *@
+
+            <!-- Monthly Expense Summary -->
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="monthly-summary">
+                    <span class="oi oi-calendar" aria-hidden="true"></span> Monthly Expense Summary
+                </NavLink>
+            </div>
+
+            <!-- Categories -->
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="categories">
                     <span class="oi oi-tags" aria-hidden="true"></span> Categories
                 </NavLink>
             </div>
+            <!-- Budgets -->
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="budgets">
                     <span class="oi oi-credit-card" aria-hidden="true"></span> Budgets
                 </NavLink>
             </div>
+            <!-- Reports -->
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="reports/monthly">
                     <span class="oi oi-graph" aria-hidden="true"></span> Monthly Report
                 </NavLink>
             </div>
-
+            <!-- User Section -->
             <div class="user-section">
                 <div class="nav-item px-3">
                     <div class="nav-link text-white-50 disabled">
@@ -91,11 +103,14 @@
         }
         else
         {
+            <!-- Login -->
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="login">
                     <span class="oi oi-account-login" aria-hidden="true"></span> Login
                 </NavLink>
             </div>
+
+            <!-- Register -->
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="register">
                     <span class="oi oi-person" aria-hidden="true"></span> Register
