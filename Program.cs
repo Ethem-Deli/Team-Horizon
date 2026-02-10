@@ -1,5 +1,6 @@
 using FamilyBudgetExpenseTracker.Data;
 using FamilyBudgetExpenseTracker.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,18 +13,25 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite("Data Source=familybudget.db"));
 
-// Session & Financial Services
+// App State & Reports (Monthly Expense Summary)
 builder.Services.AddScoped<UserState>();
 builder.Services.AddScoped<MonthlyReportService>();
 
-// FIX: Register the new Authentication Service
+// App Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-// Auth core for UI
-builder.Services.AddAuthorizationCore();
+// Authentication/Authorization for Blazor UI
+// This is REQUIRED for [Authorize] to actually work in Blazor components
+builder.Services.AddScoped<AuthenticationStateProvider, AppAuthStateProvider>();
+builder.Services.AddAuthorizationCore(options =>
+{
+    // Optional policies (you can use them with [Authorize(Policy="...")])
+    options.AddPolicy("LoggedInOnly", policy => policy.RequireAuthenticatedUser());
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
 builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
@@ -34,12 +42,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
+// Create DB if not exists
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

@@ -1,8 +1,10 @@
 @page "/budgets"
-
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 @using Microsoft.EntityFrameworkCore
+@using FamilyBudgetExpenseTracker.Data
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
 @inject ApplicationDbContext DbContext
 @inject IBudgetService BudgetService
 @inject IExpenseService ExpenseService
@@ -34,6 +36,7 @@ else
                 <th>Actual Spent</th>
                 <th>Remaining</th>
                 <th>Status</th>
+                <th class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -41,7 +44,9 @@ else
             {
                 var spent = GetSpentAmount(budget);
                 var remaining = budget.Amount - spent;
-                var percentage = (spent / budget.Amount) * 100;
+
+                // Avoid divide-by-zero
+                var percentage = budget.Amount <= 0 ? 0 : (spent / budget.Amount) * 100;
 
                 <tr>
                     <td>@GetMonthName(budget.Month) @budget.Year</td>
@@ -62,6 +67,11 @@ else
                             <span class="badge bg-danger">Over Budget</span>
                         }
                     </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary"                           href="/budgets/edit/@budget.Id">
+                            ✏️ Edit
+                        </a>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -74,18 +84,13 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-
         budgets = await BudgetService.GetUserBudgetsAsync(UserState.CurrentUserId);
 
         // Calculate spent amounts
         foreach (var budget in budgets)
         {
             var startDate = new DateTime(budget.Year, budget.Month, 1);
-            var endDate = startDate.AddMonths(1);
-
-
             var spent1 = await ExpenseService.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startDate);
-            @* var spent = spent1.Sum(e => e.Amount); *@
             spentAmounts[budget.Id] = spent1;
         }
     }
