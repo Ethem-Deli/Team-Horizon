@@ -1,5 +1,6 @@
 namespace FamilyBudgetExpenseTracker.Models;
 
+
 public class Budget
 {
     public int Id { get; set; }

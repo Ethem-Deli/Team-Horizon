@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
+
 namespace FamilyBudgetExpenseTracker.Models
 {
     public class Expense

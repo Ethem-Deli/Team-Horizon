@@ -1,4 +1,5 @@
 @page "/budgets/edit/{Id:int}"
+
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.JSInterop
 @attribute [Authorize]
@@ -10,6 +11,7 @@
 @inject UserState UserState
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+
 
 <PageTitle>Edit Budget</PageTitle>
 
