@@ -208,7 +208,12 @@ else
         </div>
     </div>
 }
-
+@* This button is to test the Error Handling: Gracefully handle errors without exposing sensitive information. 
+uncomment below line if you need to use it *@
+@* <button class="btn btn-danger" @onclick="ThrowTest">Throw Test Exception</button>
+@code {
+    void ThrowTest() => throw new Exception("TEST: unhandled exception");
+} *@
 @code {
     private decimal totalExpenses;
     private decimal monthlyBudget;

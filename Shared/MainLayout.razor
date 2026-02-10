@@ -9,17 +9,25 @@
 
     <main>
         <div class="top-row px-4">
-            <span>👤 @UserState.CurrentUserName</span>
-            @* <a href="/account/logout">Logout</a> *@
+            <span>👤 @(UserState.CurrentUserName ?? "Guest")</span>
         </div>
 
         <article class="content px-4">
-            @Body
+            <ErrorBoundary>
+                <ChildContent>
+                    @Body
+                </ChildContent>
+                <ErrorContent Context="ex">
+                    <div class="alert alert-danger mt-3">
+                        Something went wrong while loading this page.
+                        Please refresh. If it keeps happening, contact support.
+                    </div>
+                </ErrorContent>
+            </ErrorBoundary>
         </article>
     </main>
 </div>
 
 @code {
-    [Inject]
-    public UserState UserState { get; set; } = default!;
+    [Inject] public UserState UserState { get; set; } = default!;
 }

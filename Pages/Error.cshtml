@@ -1,0 +1,23 @@
+@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Something went wrong";
+}
+
+<h1>Something went wrong</h1>
+
+<p>Sorry — an unexpected error occurred.</p>
+
+@if (Model?.StatusCodeValue is not null)
+{
+    <p>Status code: <strong>@Model.StatusCodeValue</strong></p>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model?.RequestId))
+{
+    <p>Reference ID: <strong>@Model.RequestId</strong></p>
+}
+
+<p>
+    <a href="/">Go to Home</a>
+</p>

@@ -1,50 +1,55 @@
 using FamilyBudgetExpenseTracker.Data;
 using FamilyBudgetExpenseTracker.Services;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Razor Pages + Blazor Server
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+builder.Services.AddServerSideBlazor(options =>
+{
+    // Show detailed circuit errors only in Development
+    options.DetailedErrors = builder.Environment.IsDevelopment();
+});
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite("Data Source=familybudget.db"));
 
-// App State & Reports (Monthly Expense Summary)
+// App State & Reports
 builder.Services.AddScoped<UserState>();
 builder.Services.AddScoped<MonthlyReportService>();
 
-// App Services
+// Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-// Authentication/Authorization for Blazor UI
-// This is REQUIRED for [Authorize] to actually work in Blazor components
-builder.Services.AddScoped<AuthenticationStateProvider, AppAuthStateProvider>();
-builder.Services.AddAuthorizationCore(options =>
-{
-    // Optional policies (you can use them with [Authorize(Policy="...")])
-    options.AddPolicy("LoggedInOnly", policy => policy.RequireAuthenticatedUser());
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-});
+// Auth for Blazor UI (your existing setup)
+builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
+    // Friendly error page in Production
     app.UseExceptionHandler("/Error");
     app.UseHsts();
+}
+else
+{
+    // Developer exception page in Dev
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+
+// Send 404/403/etc to /Error?code=xxx
+app.UseStatusCodePagesWithReExecute("/Error", "?code={0}");
 
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
