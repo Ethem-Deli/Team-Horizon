@@ -17,7 +17,7 @@
 @if (!UserState.IsAuthenticated)
 {
     @* --- FULL VIEW LANDING PAGE (Not Logged In) --- *@
-    <div class="container-fluid d-flex flex-column justify-content-center bg-white" style="min-height: 90vh;">
+    <div class="container-fluid justify-content-center bg-white min-vh-90">
 
         @* Hero Section *@
         <div class="container">
@@ -31,8 +31,8 @@
                         platform.
                     </p>
                     <div class="d-flex gap-3">
-                        <a href="/login" class="btn btn-primary btn-lg px-5 py-3 fw-bold shadow">Get Started Now</a>
-                        <a href="/register" class="btn btn-outline-dark btn-lg px-5 py-3 fw-bold">Create Account</a>
+                        <a href="/login" class="btn btn-primary btn-sm px-5 py-2 shadow fw-bold">Get Started Now</a>
+                        <a href="/register" class="btn btn-outline-dark btn-sm px-5 py-3 fw-bold">Create Account</a>
                     </div>
                 </div>
                 <div class="col-lg-6 d-none d-lg-flex justify-content-center">
@@ -45,21 +45,21 @@
             </div>
 
             @* Feature Snippet - Arranged in Row and Styled *@
-            <div class="row mt-5 pt-5 text-center border-top">
-                <div class="col-md-4 mb-4">
-                    <div class="p-4 h-100 rounded-3 hover-shadow transition">
+            <div class="row mt-5 pt-5 text-center border-top" style="--bs-gutter-x: 0.5rem;">
+                <div class="col-12 mb-4">
+                    <div class="p-4 rounded-3 hover-shadow transition">
                         <h3 class="fw-bold mb-3">🔒 Secure</h3>
                         <p class="text-muted">Your financial data is encrypted and private to your account.</p>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="p-4 h-100 rounded-3 hover-shadow transition">
+                <div class="col-12 mb-4">
+                    <div class="p-4  rounded-3 hover-shadow transition">
                         <h3 class="fw-bold mb-3">📊 Visual</h3>
                         <p class="text-muted">Easy-to-read reports and progress bars to keep you on track.</p>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="p-4 h-100 rounded-3 hover-shadow transition">
+                <div class="col-12 mb-4">
+                    <div class="p-4 rounded-3 hover-shadow transition">
                         <h3 class="fw-bold mb-3">👨‍👩‍👧‍👦 Family First</h3>
                         <p class="text-muted">Designed for households to manage shared goals together.</p>
                     </div>
