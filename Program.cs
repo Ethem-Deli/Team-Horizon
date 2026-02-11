@@ -16,7 +16,7 @@ builder.Services.AddServerSideBlazor(options =>
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite("Data Source=familybudget.db"));
+    options.UseSqlite("Data Source=/var/data/familybudget.db"));
 
 // ✅ REQUIRED: Enables session storage used by UserState (prevents logout on refresh)
 builder.Services.AddScoped<ProtectedSessionStorage>();
