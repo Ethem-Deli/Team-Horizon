@@ -1,4 +1,11 @@
 @page "/categories/create"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using FamilyBudgetExpenseTracker.Data
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
+
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
 @inject NavigationManager Navigation
@@ -7,7 +14,15 @@
 
 <h1>➕ Add New Category</h1>
 
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
 <EditForm Model="@category" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger small" />
+
     <div class="mb-3">
         <label>Name:</label>
         <InputText @bind-Value="category.Name" class="form-control" />
@@ -30,19 +45,50 @@
     </div>
 
     <div>
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn btn-primary" disabled="@saving">
+            @(saving ? "Saving..." : "Save")
+        </button>
         <a href="/categories" class="btn btn-secondary">Cancel</a>
     </div>
 </EditForm>
 
 @code {
     private Category category = new Category();
+    private bool saving = false;
+    private string? errorMessage;
 
     private async Task HandleSubmit()
     {
-        category.UserId = UserState.CurrentUserId;
-        DbContext.Categories.Add(category);
-        await DbContext.SaveChangesAsync();
-        Navigation.NavigateTo("/categories");
+        if (saving) return;
+        saving = true;
+        errorMessage = null;
+
+        // SECURITY: Must be logged in to create a category.
+        if (UserState.CurrentUserId <= 0)
+        {
+            Navigation.NavigateTo("/account/login");
+            saving = false;
+            return;
+        }
+
+        try
+        {
+            // SECURITY: Always assign ownership from session (never trust UI/client).
+            category.UserId = UserState.CurrentUserId;
+
+            DbContext.Categories.Add(category);
+            await DbContext.SaveChangesAsync();
+
+            Navigation.NavigateTo("/categories");
+        }
+        catch
+        {
+            // Friendly error; do not expose DB details.
+            errorMessage = "Could not save category. Please try again.";
+        }
+        finally
+        {
+            saving = false;
+        }
     }
 }

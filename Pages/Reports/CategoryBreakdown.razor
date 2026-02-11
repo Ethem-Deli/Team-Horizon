@@ -1,9 +1,22 @@
 @page "/reports/category"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @using Microsoft.EntityFrameworkCore
+@using FamilyBudgetExpenseTracker.Data
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
+
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
+@inject NavigationManager Navigation
 
 <h1>🥧 Expense Breakdown by Category</h1>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
 
 <div class="row mb-3">
     <div class="col-md-3">
@@ -17,16 +30,22 @@
     </div>
 
     <div class="col-md-3">
-        <select @bind="selectedYear" class="form-control">
+        <select @bind="selectedYear" class="form-control" disabled="@(selectedMonth == 0)">
             @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
             {
                 <option value="@year">@year</option>
             }
         </select>
+        @if (selectedMonth == 0)
+        {
+            <small class="text-muted">Year filter is used only when a month is selected.</small>
+        }
     </div>
 
     <div class="col-md-3">
-        <button @onclick="LoadReport" class="btn btn-primary">Load Report</button>
+        <button @onclick="LoadReport" class="btn btn-primary" disabled="@loading">
+            @(loading ? "Loading..." : "Load Report")
+        </button>
     </div>
 </div>
 
@@ -67,7 +86,7 @@ else
                     <td>
                         <div class="progress">
                             <div class="progress-bar"
-                                style="width: @percentage%; background-color: @(item.ColorCode ?? "#000")">
+                                 style="width: @percentage%; background-color: @(item.ColorCode ?? "#000")">
                                 @percentage.ToString("N0")%
                             </div>
                         </div>
@@ -92,48 +111,82 @@ else
 @code {
     private int selectedMonth = 0;
     private int selectedYear = DateTime.Today.Year;
+
+    private bool loading = false;
+    private string? errorMessage;
+
     private List<CategoryBreakdownItem>? categoryBreakdown;
 
     private async Task LoadReport()
     {
-        IQueryable<Expense> query = DbContext.Expenses
-        .Include(e => e.Category)
-        .Where(e => e.UserId == UserState.CurrentUserId);
+        errorMessage = null;
 
-        // Month filter. If month == 0, treat it as "All Time" (no date filter).
-        if (selectedMonth > 0)
+        // SECURITY: Must have a valid logged-in user to run any report queries.
+        if (UserState.CurrentUserId <= 0)
         {
-            var startDate = new DateTime(selectedYear, selectedMonth, 1);
-            var endDate = startDate.AddMonths(1);
-            query = query.Where(e => e.Date >= startDate && e.Date < endDate);
+            Navigation.NavigateTo("/account/login");
+            return;
         }
 
-        var expenses = await query.ToListAsync();
+        loading = true;
 
-        // Group by category ID (or 0 for null category) to avoid null-key issues
-        categoryBreakdown = expenses
-        .GroupBy(e => e.CategoryId)
-        .Select(g =>
+        try
         {
-            var first = g.FirstOrDefault();
-            var cat = first?.Category;
+            // SECURITY: Always filter by UserId so reports only include the current user's data.
+            IQueryable<Expense> query = DbContext.Expenses
+                .AsNoTracking()
+                .Include(e => e.Category)
+                .Where(e => e.UserId == UserState.CurrentUserId);
 
-            return new CategoryBreakdownItem
+            // Important logic:
+            // If selectedMonth == 0 => All Time (no date filter).
+            // If selectedMonth > 0 => filter by selected month/year.
+            if (selectedMonth > 0)
             {
-                CategoryId = g.Key,
-                CategoryName = cat?.Name ?? "Uncategorized",
-                Icon = cat?.Icon ?? "",
-                ColorCode = cat?.ColorCode ?? "#000",
-                Total = g.Sum(e => e.Amount),
-                Count = g.Count()
-            };
-        })
-        .ToList();
+                var startDate = new DateTime(selectedYear, selectedMonth, 1);
+                var endDate = startDate.AddMonths(1);
+
+                query = query.Where(e => e.Date >= startDate && e.Date < endDate);
+            }
+
+            var expenses = await query.ToListAsync();
+
+            // Important logic:
+            // Group by CategoryId (nullable possible), then compute totals and counts per group.
+            categoryBreakdown = expenses
+                .GroupBy(e => e.CategoryId)
+                .Select(g =>
+                {
+                    var first = g.FirstOrDefault();
+                    var cat = first?.Category;
+
+                    return new CategoryBreakdownItem
+                    {
+                        CategoryId = g.Key,
+                        CategoryName = cat?.Name ?? "Uncategorized",
+                        Icon = cat?.Icon ?? "",
+                        ColorCode = cat?.ColorCode ?? "#000",
+                        Total = g.Sum(e => e.Amount),
+                        Count = g.Count()
+                    };
+                })
+                .ToList();
+        }
+        catch
+        {
+            // Friendly error message; do not expose stack traces or DB details.
+            errorMessage = "Could not load the report. Please try again.";
+            categoryBreakdown = new List<CategoryBreakdownItem>();
+        }
+        finally
+        {
+            loading = false;
+        }
     }
 
     private class CategoryBreakdownItem
     {
-        public int CategoryId { get; set; }
+        public int? CategoryId { get; set; }
         public string CategoryName { get; set; } = "Uncategorized";
         public string Icon { get; set; } = "";
         public string ColorCode { get; set; } = "#000";

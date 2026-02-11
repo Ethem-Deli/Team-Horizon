@@ -6,6 +6,7 @@
 @using Microsoft.EntityFrameworkCore
 @using FamilyBudgetExpenseTracker.Data
 @using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
 
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
@@ -31,38 +32,45 @@ else
         <div class="alert alert-danger">@error</div>
     }
 
-    <form @onsubmit="OnSubmit" @onsubmit:preventDefault="true">
+    <!-- Use EditForm + Input components to avoid Date/Time conversion issues -->
+    <EditForm Model="expense" OnValidSubmit="OnSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger small" />
+
         <div class="mb-3">
             <label class="form-label">Amount:</label>
-            <input type="number" step="0.01" class="form-control" @bind="expense.Amount" />
+            <InputNumber @bind-Value="expense.Amount" class="form-control" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Date:</label>
-            <input type="date" class="form-control" @bind="expense.Date" />
+            <!-- ✅ Expense.Date is DateTime, so bind using InputDate -->
+            <InputDate @bind-Value="expense.Date" class="form-control" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Description:</label>
-            <input class="form-control" @bind="expense.Description" />
+            <InputText @bind-Value="expense.Description" class="form-control" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Category:</label>
-            <select class="form-control" @bind="expense.CategoryId">
+            <InputSelect @bind-Value="expense.CategoryId" class="form-control">
                 <option value="0">Select category...</option>
                 @foreach (var category in categories)
                 {
                     <option value="@category.Id">@category.Icon @category.Name</option>
                 }
-            </select>
+            </InputSelect>
         </div>
 
-        <div>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@saving">
+                @(saving ? "Saving..." : "Save Changes")
+            </button>
             <a href="/expenses" class="btn btn-secondary">Cancel</a>
         </div>
-    </form>
+    </EditForm>
 }
 
 @code {
@@ -71,41 +79,58 @@ else
     private Expense? expense;
     private List<Category> categories = new();
     private bool loading = true;
+    private bool saving = false;
     private string? error;
-
-    // HTML <input type="date"> binds to string in yyyy-MM-dd format
-    private string dateString = "";
 
     protected override async Task OnInitializedAsync()
     {
+        error = null;
 
-        // Only allow editing current user's expense
-        expense = await DbContext.Expenses
-        .FirstOrDefaultAsync(e => e.Id == Id && e.UserId == UserState.CurrentUserId);
-
-        if (expense != null)
+        // SECURITY: Must be logged in to edit expenses.
+        if (UserState.CurrentUserId <= 0)
         {
-            // Load current user's categories
-            categories = await DbContext.Categories
-            .Where(c => c.UserId == UserState.CurrentUserId)
-            .OrderBy(c => c.Name)
-            .ToListAsync();
-
-            dateString = expense.Date.ToString("yyyy-MM-dd");
+            NavManager.NavigateTo("/account/login");
+            return;
         }
 
-        loading = false;
+        try
+        {
+            // SECURITY: Load ONLY the current user's expense (Id + UserId).
+            expense = await DbContext.Expenses
+                .FirstOrDefaultAsync(e => e.Id == Id && e.UserId == UserState.CurrentUserId);
+
+            if (expense != null)
+            {
+                // SECURITY: Load ONLY the current user's categories.
+                categories = await DbContext.Categories
+                    .AsNoTracking()
+                    .Where(c => c.UserId == UserState.CurrentUserId)
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
+            }
+        }
+        catch
+        {
+            error = "Could not load expense. Please try again.";
+        }
+        finally
+        {
+            loading = false;
+        }
     }
 
     private async Task OnSubmit()
     {
-        if (expense == null)
+        if (saving || expense == null) return;
+
+        // SECURITY: Prevent cross-user update (ownership check).
+        if (expense.UserId != UserState.CurrentUserId)
         {
             NavManager.NavigateTo("/expenses");
             return;
         }
 
-        // Basic validation (since we are not using DataAnnotationsValidator)
+        // Simple validation (assignment-friendly)
         if (expense.Amount <= 0)
         {
             error = "Amount must be greater than 0.";
@@ -124,23 +149,32 @@ else
             return;
         }
 
-        if (!DateTime.TryParse(dateString, out var parsedDate))
-        {
-            error = "Please enter a valid date.";
-            return;
-        }
-
-        expense.Date = parsedDate;
-
-        // Safety check: still the current user's expense
-        if (expense.UserId != UserState.CurrentUserId)
-        {
-            NavManager.NavigateTo("/expenses");
-            return;
-        }
-
+        saving = true;
         error = null;
-        await DbContext.SaveChangesAsync();
-        NavManager.NavigateTo("/expenses");
+
+        try
+        {
+            // SECURITY: Ensure selected category belongs to current user.
+            var categoryOwnedByUser = await DbContext.Categories
+                .AsNoTracking()
+                .AnyAsync(c => c.Id == expense.CategoryId && c.UserId == UserState.CurrentUserId);
+
+            if (!categoryOwnedByUser)
+            {
+                error = "Invalid category selection.";
+                return;
+            }
+
+            await DbContext.SaveChangesAsync();
+            NavManager.NavigateTo("/expenses");
+        }
+        catch
+        {
+            error = "Could not save changes. Please try again.";
+        }
+        finally
+        {
+            saving = false;
+        }
     }
 }

@@ -1,6 +1,10 @@
 @page "/categories"
-@using Microsoft.EntityFrameworkCore;
-@inject ApplicationDbContext DbContext
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
+
 @inject UserState UserState
 @inject ICategoryService CategoryService
 @inject NavigationManager Navigation
@@ -12,6 +16,11 @@
 <div class="mb-3">
     <a href="/categories/create" class="btn btn-primary">➕ Add New Category</a>
 </div>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
 
 @if (categories == null)
 {
@@ -44,39 +53,57 @@ else
 
 @code {
     private List<Category>? categories;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
+        // SECURITY: Must be logged in to view categories.
+        if (UserState.CurrentUserId <= 0)
+        {
+            Navigation.NavigateTo("/account/login");
+            return;
+        }
+
         await LoadCategories();
     }
 
     private async Task LoadCategories()
     {
-        if (UserState.CurrentUserId == 0)
+        errorMessage = null;
+
+        try
         {
-            categories = new List<Category>();
-            return;
+            // SECURITY: CategoryService enforces user isolation (filters by UserId).
+            categories = await CategoryService.GetUserCategoriesAsync(UserState.CurrentUserId);
         }
-        categories = await CategoryService.GetUserCategoriesAsync(UserState.CurrentUserId);
-        @* categories = await DbContext.Categories
-        .Where(c => c.UserId == UserState.CurrentUserId)
-        .ToListAsync(); *@
+        catch
+        {
+            // Friendly error; no sensitive details shown.
+            errorMessage = "Could not load categories. Please refresh and try again.";
+            categories = new List<Category>();
+        }
     }
+
     private async Task DeleteCategory(int id)
     {
-        if (UserState.CurrentUserId == 0)
+        errorMessage = null;
+
+        // SECURITY: Must be logged in to delete.
+        if (UserState.CurrentUserId <= 0)
         {
+            Navigation.NavigateTo("/account/login");
             return;
         }
-        await CategoryService.DeleteCategoryAsync(id, UserState.CurrentUserId);
-        await LoadCategories();
-    }
-    @* var category = await DbContext.Categories.FindAsync(id);
-        if (category != null)
+
+        try
         {
-            DbContext.Categories.Remove(category);
-            await DbContext.SaveChangesAsync();
+            // SECURITY: Service method deletes only if (CategoryId + UserId) matches.
+            await CategoryService.DeleteCategoryAsync(id, UserState.CurrentUserId);
             await LoadCategories();
-        } *@
-}
+        }
+        catch
+        {
+            errorMessage = "Could not delete category. Please try again.";
+        }
+    }
 }

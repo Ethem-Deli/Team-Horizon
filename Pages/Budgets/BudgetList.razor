@@ -1,14 +1,14 @@
 @page "/budgets"
+
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
-@using Microsoft.EntityFrameworkCore
-@using FamilyBudgetExpenseTracker.Data
 @using FamilyBudgetExpenseTracker.Models
 @using FamilyBudgetExpenseTracker.Services
-@inject ApplicationDbContext DbContext
+
 @inject IBudgetService BudgetService
 @inject IExpenseService ExpenseService
 @inject UserState UserState
+@inject NavigationManager Navigation
 
 <PageTitle>Budgets</PageTitle>
 
@@ -18,11 +18,16 @@
     <a href="/budgets/create" class="btn btn-primary">➕ Set New Budget</a>
 </div>
 
-@if (budgets == null)
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (loading)
 {
     <p><em>Loading...</em></p>
 }
-else if (!budgets.Any())
+else if (budgets == null || !budgets.Any())
 {
     <p>No budgets set. <a href="/budgets/create">Create your first budget</a></p>
 }
@@ -42,10 +47,11 @@ else
         <tbody>
             @foreach (var budget in budgets)
             {
+                // Important logic: for each budget month, show total spent and remaining.
                 var spent = GetSpentAmount(budget);
                 var remaining = budget.Amount - spent;
 
-                // Avoid divide-by-zero
+                // Avoid divide-by-zero when calculating usage percentage.
                 var percentage = budget.Amount <= 0 ? 0 : (spent / budget.Amount) * 100;
 
                 <tr>
@@ -82,26 +88,59 @@ else
     private List<Budget>? budgets;
     private Dictionary<int, decimal> spentAmounts = new();
 
+    private bool loading = true;
+    private string? errorMessage;
+
     protected override async Task OnInitializedAsync()
     {
-        budgets = await BudgetService.GetUserBudgetsAsync(UserState.CurrentUserId);
+        errorMessage = null;
 
-        // Calculate spent amounts
-        foreach (var budget in budgets)
+        // SECURITY: Must have a valid logged-in user before loading any budgets.
+        if (UserState.CurrentUserId <= 0)
         {
-            var startDate = new DateTime(budget.Year, budget.Month, 1);
-            var spent1 = await ExpenseService.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startDate);
-            spentAmounts[budget.Id] = spent1;
+            Navigation.NavigateTo("/account/login");
+            return;
+        }
+
+        try
+        {
+            // SECURITY: Service enforces user isolation by filtering budgets by UserId.
+            budgets = await BudgetService.GetUserBudgetsAsync(UserState.CurrentUserId);
+
+            // Important logic:
+            // For each budget period, compute "spent" using ExpenseService for the same user.
+            spentAmounts.Clear();
+
+            foreach (var budget in budgets)
+            {
+                var startDate = new DateTime(budget.Year, budget.Month, 1);
+
+                // SECURITY: ExpenseService totals are filtered by UserId.
+                var totalSpent = await ExpenseService.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startDate);
+                spentAmounts[budget.Id] = totalSpent;
+            }
+        }
+        catch
+        {
+            // Friendly error message (do not expose exception details).
+            errorMessage = "Could not load budgets. Please refresh and try again.";
+            budgets = new List<Budget>();
+        }
+        finally
+        {
+            loading = false;
         }
     }
 
     private decimal GetSpentAmount(Budget budget)
     {
+        // Safe default if a budget id is missing from dictionary.
         return spentAmounts.GetValueOrDefault(budget.Id, 0);
     }
 
     private string GetMonthName(int month)
     {
+        // Converts numeric month (1-12) into a readable month name.
         return new DateTime(2000, month, 1).ToString("MMMM");
     }
 }
