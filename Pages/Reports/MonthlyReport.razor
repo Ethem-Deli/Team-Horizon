@@ -1,43 +1,50 @@
 ﻿@page "/reports/monthly"
 @using FamilyBudgetExpenseTracker.Models.ViewModels
 @using FamilyBudgetExpenseTracker.Services
+@using System.ComponentModel.DataAnnotations
 @inject MonthlyReportService ReportService
 @inject UserState UserState
 @inject IJSRuntime JS
 @using Microsoft.JSInterop
-@inject IJSRuntime JS
 
-<PageTitle>Monthly Report - @(new DateTime(selectedYear, selectedMonth, 1).ToString("MMMM yyyy"))</PageTitle>
+<PageTitle>Monthly Report - @(new DateTime(filter.Year, filter.Month, 1).ToString("MMMM yyyy"))</PageTitle>
 
 <h1>Monthly Report</h1>
 
-<div class="row mb-4 bg-light p-3 rounded">
-    <div class="col-md-3">
-        <label class="form-label">Month</label>
-        <select @bind="selectedMonth" class="form-control">
-            @for (int i = 1; i <= 12; i++)
-            {
-                <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
-            }
-        </select>
-    </div>
+<EditForm Model="filter" OnValidSubmit="LoadReport">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger small" />
 
-    <div class="col-md-3">
-        <label class="form-label">Year</label>
-        <select @bind="selectedYear" class="form-control">
-            @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
-            {
-                <option value="@year">@year</option>
-            }
-        </select>
-    </div>
+    <div class="row mb-4 bg-light p-3 rounded">
+        <div class="col-md-3">
+            <label class="form-label">Month</label>
+            <InputSelect @bind-Value="filter.Month" class="form-control">
+                @for (int i = 1; i <= 12; i++)
+                {
+                    <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => filter.Month)" />
+        </div>
 
-    <div class="col-md-3 d-flex align-items-end">
-        <button @onclick="LoadReport" class="btn btn-primary w-100">
-            <i class="bi bi-search"></i> Load Report
-        </button>
+        <div class="col-md-3">
+            <label class="form-label">Year</label>
+            <InputSelect @bind-Value="filter.Year" class="form-control">
+                @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
+                {
+                    <option value="@year">@year</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => filter.Year)" />
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> Load Report
+            </button>
+        </div>
     </div>
-</div>
+</EditForm>
 
 @if (report == null)
 {
@@ -189,8 +196,12 @@ else
 }
 
 @code {
-    private int selectedMonth = DateTime.Today.Month;
-    private int selectedYear = DateTime.Today.Year;
+    private MonthlyReportFilterModel filter = new()
+    {
+        Month = DateTime.Today.Month,
+        Year = DateTime.Today.Year
+    };
+
     private MonthlyReportViewModel? report;
     private bool shouldRenderCharts;
 
@@ -223,9 +234,9 @@ else
     private async Task LoadReport()
     {
         report = await ReportService.GetMonthlyReportAsync(
-        UserState.CurrentUserId,
-        selectedYear,
-        selectedMonth
+            UserState.CurrentUserId,
+            filter.Year,
+            filter.Month
         );
 
         shouldRenderCharts = true;
@@ -255,5 +266,14 @@ else
         }
 
         return colors;
+    }
+
+    private sealed class MonthlyReportFilterModel
+    {
+        [Range(1, 12, ErrorMessage = "Select a valid month.")]
+        public int Month { get; set; }
+
+        [Range(2000, 2100, ErrorMessage = "Select a valid year.")]
+        public int Year { get; set; }
     }
 }

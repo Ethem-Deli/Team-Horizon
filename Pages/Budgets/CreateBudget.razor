@@ -27,11 +27,13 @@
                                     <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
                                 }
                             </InputSelect>
+                            <ValidationMessage For="@(() => budget.Month)" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Year</label>
                             <InputNumber @bind-Value="budget.Year" class="form-control" />
+                            <ValidationMessage For="@(() => budget.Year)" />
                         </div>
 
                         <div class="mb-3">

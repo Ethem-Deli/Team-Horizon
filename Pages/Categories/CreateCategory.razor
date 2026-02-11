@@ -1,4 +1,4 @@
-@page "/categories/create"
+﻿@page "/categories/create"
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
 @inject NavigationManager Navigation
@@ -8,25 +8,32 @@
 <h1>➕ Add New Category</h1>
 
 <EditForm Model="@category" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger small" />
+
     <div class="mb-3">
         <label>Name:</label>
         <InputText @bind-Value="category.Name" class="form-control" />
+        <ValidationMessage For="@(() => category.Name)" />
     </div>
 
     <div class="mb-3">
         <label>Description:</label>
         <InputText @bind-Value="category.Description" class="form-control" />
+        <ValidationMessage For="@(() => category.Description)" />
     </div>
 
     <div class="mb-3">
         <label>Icon:</label>
         <InputText @bind-Value="category.Icon" class="form-control" placeholder="e.g., 🛒" />
+        <ValidationMessage For="@(() => category.Icon)" />
         <small class="text-muted">Use an emoji</small>
     </div>
 
     <div class="mb-3">
         <label>Color:</label>
         <input type="color" @bind="category.ColorCode" class="form-control" />
+        <ValidationMessage For="@(() => category.ColorCode)" />
     </div>
 
     <div>
@@ -36,7 +43,7 @@
 </EditForm>
 
 @code {
-    private Category category = new Category();
+    private readonly Category category = new();
 
     private async Task HandleSubmit()
     {

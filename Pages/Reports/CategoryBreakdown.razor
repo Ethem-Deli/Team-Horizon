@@ -1,34 +1,42 @@
-@page "/reports/category"
+﻿@page "/reports/category"
 @using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
 
 <h1>🥧 Expense Breakdown by Category</h1>
 
-<div class="row mb-3">
-    <div class="col-md-3">
-        <select @bind="selectedMonth" class="form-control">
-            <option value="0">All Time</option>
-            @for (int i = 1; i <= 12; i++)
-            {
-                <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
-            }
-        </select>
-    </div>
+<EditForm Model="filter" OnValidSubmit="LoadReport">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger small" />
 
-    <div class="col-md-3">
-        <select @bind="selectedYear" class="form-control">
-            @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
-            {
-                <option value="@year">@year</option>
-            }
-        </select>
-    </div>
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <InputSelect @bind-Value="filter.Month" class="form-control">
+                <option value="0">All Time</option>
+                @for (int i = 1; i <= 12; i++)
+                {
+                    <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => filter.Month)" />
+        </div>
 
-    <div class="col-md-3">
-        <button @onclick="LoadReport" class="btn btn-primary">Load Report</button>
+        <div class="col-md-3">
+            <InputSelect @bind-Value="filter.Year" class="form-control">
+                @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
+                {
+                    <option value="@year">@year</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => filter.Year)" />
+        </div>
+
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Load Report</button>
+        </div>
     </div>
-</div>
+</EditForm>
 
 @if (categoryBreakdown == null)
 {
@@ -90,52 +98,63 @@ else
 }
 
 @code {
-    private int selectedMonth = 0;
-    private int selectedYear = DateTime.Today.Year;
+    private readonly CategoryBreakdownFilterModel filter = new()
+    {
+        Month = 0,
+        Year = DateTime.Today.Year
+    };
+
     private List<CategoryBreakdownItem>? categoryBreakdown;
 
     private async Task LoadReport()
     {
         IQueryable<Expense> query = DbContext.Expenses
-        .Include(e => e.Category)
-        .Where(e => e.UserId == UserState.CurrentUserId);
+            .Include(e => e.Category)
+            .Where(e => e.UserId == UserState.CurrentUserId);
 
-        // Month filter. If month == 0, treat it as "All Time" (no date filter).
-        if (selectedMonth > 0)
+        if (filter.Month > 0)
         {
-            var startDate = new DateTime(selectedYear, selectedMonth, 1);
+            var startDate = new DateTime(filter.Year, filter.Month, 1);
             var endDate = startDate.AddMonths(1);
             query = query.Where(e => e.Date >= startDate && e.Date < endDate);
         }
 
         var expenses = await query.ToListAsync();
 
-        // Group by category ID (or 0 for null category) to avoid null-key issues
         categoryBreakdown = expenses
-        .GroupBy(e => e.CategoryId)
-        .Select(g =>
-        {
-            var first = g.FirstOrDefault();
-            var cat = first?.Category;
-
-            return new CategoryBreakdownItem
+            .GroupBy(e => e.CategoryId)
+            .Select(g =>
             {
-                CategoryId = g.Key,
-                CategoryName = cat?.Name ?? "Uncategorized",
-                Icon = cat?.Icon ?? "",
-                ColorCode = cat?.ColorCode ?? "#000",
-                Total = g.Sum(e => e.Amount),
-                Count = g.Count()
-            };
-        })
-        .ToList();
+                var first = g.FirstOrDefault();
+                var cat = first?.Category;
+
+                return new CategoryBreakdownItem
+                {
+                    CategoryId = g.Key,
+                    CategoryName = cat?.Name ?? "Uncategorized",
+                    Icon = cat?.Icon ?? "",
+                    ColorCode = cat?.ColorCode ?? "#000",
+                    Total = g.Sum(e => e.Amount),
+                    Count = g.Count()
+                };
+            })
+            .ToList();
     }
 
-    private class CategoryBreakdownItem
+    private sealed class CategoryBreakdownFilterModel
+    {
+        [Range(0, 12, ErrorMessage = "Select a valid month.")]
+        public int Month { get; set; }
+
+        [Range(2000, 2100, ErrorMessage = "Select a valid year.")]
+        public int Year { get; set; }
+    }
+
+    private sealed class CategoryBreakdownItem
     {
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = "Uncategorized";
-        public string Icon { get; set; } = "";
+        public string Icon { get; set; } = string.Empty;
         public string ColorCode { get; set; } = "#000";
         public decimal Total { get; set; }
         public int Count { get; set; }

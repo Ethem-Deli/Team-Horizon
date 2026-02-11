@@ -1,4 +1,4 @@
-@page "/expenses/edit/{Id:int}"
+﻿@page "/expenses/edit/{Id:int}"
 
 @using Microsoft.AspNetCore.Components
 @using Microsoft.EntityFrameworkCore
@@ -29,38 +29,45 @@ else
         <div class="alert alert-danger">@error</div>
     }
 
-    <form @onsubmit="OnSubmit" @onsubmit:preventDefault="true">
+    <EditForm Model="expense" OnValidSubmit="OnSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger small" />
+
         <div class="mb-3">
             <label class="form-label">Amount:</label>
-            <input type="number" step="0.01" class="form-control" @bind="expense.Amount" />
+            <InputNumber @bind-Value="expense.Amount" step="0.01" class="form-control" />
+            <ValidationMessage For="@(() => expense.Amount)" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Date:</label>
-            <input type="date" class="form-control" @bind="expense.Date" />
+            <InputDate @bind-Value="expense.Date" class="form-control" />
+            <ValidationMessage For="@(() => expense.Date)" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Description:</label>
-            <input class="form-control" @bind="expense.Description" />
+            <InputText @bind-Value="expense.Description" class="form-control" />
+            <ValidationMessage For="@(() => expense.Description)" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Category:</label>
-            <select class="form-control" @bind="expense.CategoryId">
+            <InputSelect @bind-Value="expense.CategoryId" class="form-control">
                 <option value="0">Select category...</option>
                 @foreach (var category in categories)
                 {
                     <option value="@category.Id">@category.Icon @category.Name</option>
                 }
-            </select>
+            </InputSelect>
+            <ValidationMessage For="@(() => expense.CategoryId)" />
         </div>
 
         <div>
             <button type="submit" class="btn btn-primary">Save Changes</button>
             <a href="/expenses" class="btn btn-secondary">Cancel</a>
         </div>
-    </form>
+    </EditForm>
 }
 
 @code {
@@ -71,25 +78,17 @@ else
     private bool loading = true;
     private string? error;
 
-    // HTML <input type="date"> binds to string in yyyy-MM-dd format
-    private string dateString = "";
-
     protected override async Task OnInitializedAsync()
     {
-
-        // Only allow editing current user's expense
         expense = await DbContext.Expenses
-        .FirstOrDefaultAsync(e => e.Id == Id && e.UserId == UserState.CurrentUserId);
+            .FirstOrDefaultAsync(e => e.Id == Id && e.UserId == UserState.CurrentUserId);
 
         if (expense != null)
         {
-            // Load current user's categories
             categories = await DbContext.Categories
-            .Where(c => c.UserId == UserState.CurrentUserId)
-            .OrderBy(c => c.Name)
-            .ToListAsync();
-
-            dateString = expense.Date.ToString("yyyy-MM-dd");
+                .Where(c => c.UserId == UserState.CurrentUserId)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
         }
 
         loading = false;
@@ -103,34 +102,6 @@ else
             return;
         }
 
-        // Basic validation (since we are not using DataAnnotationsValidator)
-        if (expense.Amount <= 0)
-        {
-            error = "Amount must be greater than 0.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(expense.Description))
-        {
-            error = "Description is required.";
-            return;
-        }
-
-        if (expense.CategoryId <= 0)
-        {
-            error = "Please select a category.";
-            return;
-        }
-
-        if (!DateTime.TryParse(dateString, out var parsedDate))
-        {
-            error = "Please enter a valid date.";
-            return;
-        }
-
-        expense.Date = parsedDate;
-
-        // Safety check: still the current user's expense
         if (expense.UserId != UserState.CurrentUserId)
         {
             NavManager.NavigateTo("/expenses");

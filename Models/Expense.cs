@@ -14,10 +14,11 @@ namespace FamilyBudgetExpenseTracker.Models
         [Required]
         public string Description { get; set; } = string.Empty;
 
+        [Required]
         public DateTime Date { get; set; } = DateTime.Now;
 
         // Foreign Key to Category
-        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Please select a category.")]
         public int CategoryId { get; set; }
         public Category? Category { get; set; }
 
