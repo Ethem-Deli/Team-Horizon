@@ -47,12 +47,14 @@ namespace FamilyBudgetExpenseTracker.Services
             // SECURITY: If user is not logged in, return 0.
             if (userId <= 0) return 0m;
 
-            // SECURITY: Always filter by UserId so totals are for the current user only.
-            // PERF: Sum in the database instead of loading all expenses into memory.
-            return await _db.Expenses
+            // SQLite can't SUM() decimals reliably via EF translation.
+            // Sum as double in SQL, then convert back to decimal.
+            var total = await _db.Expenses
                 .AsNoTracking()
                 .Where(e => e.UserId == userId && e.Date.Year == date.Year && e.Date.Month == date.Month)
-                .SumAsync(e => (decimal?)e.Amount) ?? 0m;
+                .SumAsync(e => (double?)e.Amount) ?? 0d;
+
+            return (decimal)total;
         }
 
         public async Task<bool> AddExpenseAsync(Expense expense)

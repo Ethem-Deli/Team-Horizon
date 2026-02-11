@@ -84,7 +84,7 @@
         // SECURITY: Must have a valid logged-in user.
         if (UserState.CurrentUserId <= 0)
         {
-            Navigation.NavigateTo("/account/login");
+            Navigation.NavigateTo("/account/login", forceLoad: true);
             isSaving = false;
             return;
         }
@@ -94,12 +94,11 @@
             // SECURITY: Always assign ownership from session (never trust UI/client).
             budget.UserId = UserState.CurrentUserId;
 
-            // Important logic:
-            // If a budget already exists for this user/month/year, update it instead of inserting a duplicate row.
+            // If budget exists for this user/month/year, update instead of insert
             var existing = await DbContext.Budgets
                 .FirstOrDefaultAsync(b => b.UserId == budget.UserId
-                                     && b.Month == budget.Month
-                                     && b.Year == budget.Year);
+                                       && b.Month == budget.Month
+                                       && b.Year == budget.Year);
 
             if (existing != null)
             {
@@ -113,11 +112,11 @@
 
             await DbContext.SaveChangesAsync();
 
-            Navigation.NavigateTo("/budgets");
+            // Force reload so auth/session state is consistent after navigation
+            Navigation.NavigateTo("/budgets", forceLoad: true);
         }
         catch
         {
-            // Friendly error message; no sensitive details shown to user.
             errorMessage = "Could not save budget. Ensure all fields are valid.";
         }
         finally

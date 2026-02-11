@@ -122,12 +122,11 @@ else
                 spentAmounts[budget.Id] = totalSpent;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Friendly error message (do not expose exception details).
-            errorMessage = "Could not load budgets. Please refresh and try again.";
-            budgets = new List<Budget>();
+            errorMessage = ex.Message;
         }
+        
         finally
         {
             loading = false;
