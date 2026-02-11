@@ -2,11 +2,11 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Routing
 @implements IDisposable
+
 @inject UserState UserState
 @inject NavigationManager NavManager
 
 <style>
-    /* Ensure the branding is always visible and not just on hover */
     .navbar-brand {
         color: white !important;
         font-weight: bold;
@@ -17,7 +17,6 @@
 
     .nav-scrollable {
         background-color: #111827;
-        /* Dark theme sidebar */
         min-height: calc(100vh - 3.5rem);
     }
 
@@ -75,18 +74,21 @@
                     <span class="oi oi-tags" aria-hidden="true"></span> Categories
                 </NavLink>
             </div>
+
             <!-- Budgets -->
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="budgets">
                     <span class="oi oi-credit-card" aria-hidden="true"></span> Budgets
                 </NavLink>
             </div>
+
             <!-- Reports -->
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="reports/monthly">
                     <span class="oi oi-graph" aria-hidden="true"></span> Monthly Report
                 </NavLink>
             </div>
+
             <!-- User Section -->
             <div class="user-section">
                 <div class="nav-item px-3">
@@ -128,12 +130,14 @@
 
     protected override void OnInitialized()
     {
+        // Update menu when login/logout happens
         UserState.OnChange += StateHasChanged;
     }
 
-    private void HandleLogout()
+    private async Task HandleLogout()
     {
-        UserState.Logout();
+        //Use async logout so session storage is cleared correctly
+        await UserState.LogoutAsync();
         NavManager.NavigateTo("/");
     }
 

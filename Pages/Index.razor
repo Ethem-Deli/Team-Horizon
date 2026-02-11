@@ -236,17 +236,31 @@ uncomment below line if you need to use it *@
 
     private async Task LoadDashboardData()
     {
-        var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-        totalExpenses = await ExpenseSvc.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startOfMonth);
-        var budget = await BudgetSvc.GetBudgetForMonthAsync(UserState.CurrentUserId, DateTime.Today.Month, DateTime.Today.Year);
-        monthlyBudget = budget?.Amount ?? 0m;
+        try
+        {
+            var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 
-        percentLeft = monthlyBudget > 0m ? (int)Math.Max(0, Math.Min(100, Math.Round((1 - (totalExpenses / monthlyBudget)) *
-100m))) : 0;
+            totalExpenses = await ExpenseSvc.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startOfMonth);
 
-        categoryCount = await CategorySvc.GetCategoryCountAsync(UserState.CurrentUserId);
-        recentExpenses = await ExpenseSvc.GetRecentExpensesAsync(UserState.CurrentUserId);
+            var budget = await BudgetSvc.GetBudgetForMonthAsync(UserState.CurrentUserId, DateTime.Today.Year, DateTime.Today.Month);
+            monthlyBudget = budget?.Amount ?? 0m;
+
+            percentLeft = monthlyBudget > 0m
+                ? (int)Math.Max(0, Math.Min(100, Math.Round((1 - (totalExpenses / monthlyBudget)) * 100m)))
+                : 0;
+
+            categoryCount = await CategorySvc.GetCategoryCountAsync(UserState.CurrentUserId);
+            recentExpenses = await ExpenseSvc.GetRecentExpensesAsync(UserState.CurrentUserId);
+        }
+        catch
+        {
+            // keep it simple for assignment: prevent crash
+            totalExpenses = 0m;
+            monthlyBudget = 0m;
+            percentLeft = 0;
+            categoryCount = 0;
+            recentExpenses = new();
+        }
     }
-
     public void Dispose() => UserState.OnChange -= HandleStateChange;
 }

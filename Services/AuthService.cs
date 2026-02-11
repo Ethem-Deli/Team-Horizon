@@ -21,15 +21,15 @@ namespace FamilyBudgetExpenseTracker.Services
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return null;
 
-            // We fetch the user first
+            // Fetch user by username (case-insensitive)
             var user = await _db.Users.FirstOrDefaultAsync(u =>
                 u.Username.ToLower() == username.ToLower());
 
-            // We verify. If either fails, we return null. 
-            // The UI will handle this by showing a generic "Invalid credentials" message.
+            // Verify password hash
             if (user != null && PasswordHasher.Verify(password, user.PasswordHash))
             {
-                _userState.Login(user);
+                // ✅ Persist session login (refresh will stay logged in)
+                await _userState.LoginAsync(user);
                 return user;
             }
 
@@ -38,15 +38,15 @@ namespace FamilyBudgetExpenseTracker.Services
 
         public async Task<bool> UserExistsAsync(string username, string email)
         {
-            // Check both username and email for duplicates
             return await _db.Users.AnyAsync(u =>
                 u.Username.ToLower() == username.ToLower() ||
                 u.Email.ToLower() == email.ToLower());
         }
 
+        // ✅ Interface requires Logout() (sync). Keep it and call async internally.
         public void Logout()
         {
-            _userState.Logout();
+            _userState.Logout(); // uses compatibility wrapper -> LogoutAsync()
         }
     }
 }

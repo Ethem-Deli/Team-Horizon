@@ -1,5 +1,7 @@
 using FamilyBudgetExpenseTracker.Data;
 using FamilyBudgetExpenseTracker.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +18,9 @@ builder.Services.AddServerSideBlazor(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite("Data Source=familybudget.db"));
 
+// ✅ REQUIRED: Enables session storage used by UserState (prevents logout on refresh)
+builder.Services.AddScoped<ProtectedSessionStorage>();
+
 // App State & Reports
 builder.Services.AddScoped<UserState>();
 builder.Services.AddScoped<MonthlyReportService>();
@@ -26,9 +31,10 @@ builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-// Auth for Blazor UI (your existing setup)
+// ✅ REQUIRED for [Authorize] to work in Blazor components
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider, AppAuthStateProvider>();
 
 var app = builder.Build();
 
