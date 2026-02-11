@@ -34,46 +34,48 @@ else if (!expenses.Any())
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th>Amount</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @foreach (var expense in expenses)
-            {
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td>@expense.Date.ToString("MMM dd, yyyy")</td>
-                    <td>@expense.Description</td>
-                    <td>
-                        <span style="color: @(expense.Category?.ColorCode ?? "#000")">
-                            @(expense.Category?.Icon ?? "") @(expense.Category?.Name ?? "Uncategorized")
-                        </span>
-                    </td>
-                    <td><strong>$@expense.Amount.ToString("N2")</strong></td>
-                    <td>
-                        <a href="/expenses/edit/@expense.Id" class="btn btn-sm btn-warning">Edit</a>
-                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteExpense(expense.Id)">Delete</button>
-                        <a href="/expenses/details/@expense.Id" class="btn btn-sm btn-info">View</a>
-                    </td>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
+            </thead>
 
-        <tfoot>
-            <tr>
-                <td colspan="3"><strong>Total:</strong></td>
-                <td><strong>$@expenses.Sum(e => e.Amount).ToString("N2")</strong></td>
-                <td></td>
-            </tr>
-        </tfoot>
-    </table>
+            <tbody>
+                @foreach (var expense in expenses)
+                {
+                    <tr>
+                        <td>@expense.Date.ToString("MMM dd, yyyy")</td>
+                        <td>@expense.Description</td>
+                        <td>
+                            <span style="color: @(expense.Category?.ColorCode ?? "#000")">
+                                @(expense.Category?.Icon ?? "") @(expense.Category?.Name ?? "Uncategorized")
+                            </span>
+                        </td>
+                        <td><strong>$@expense.Amount.ToString("N2")</strong></td>
+                        <td>
+                            <a href="/expenses/edit/@expense.Id" class="btn btn-sm btn-warning">Edit</a>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteExpense(expense.Id)">Delete</button>
+                            <a href="/expenses/details/@expense.Id" class="btn btn-sm btn-info">View</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+            <tfoot>
+                <tr>
+                    <td colspan="3"><strong>Total:</strong></td>
+                    <td><strong>$@expenses.Sum(e => e.Amount).ToString("N2")</strong></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 }
 
 @code {

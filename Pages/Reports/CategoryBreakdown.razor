@@ -61,51 +61,53 @@ else
 {
     var grandTotal = categoryBreakdown.Sum(x => x.Total);
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Category</th>
-                <th>Total</th>
-                <th>Percentage</th>
-                <th>Count</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @foreach (var item in categoryBreakdown.OrderByDescending(x => x.Total))
-            {
-                var percentage = grandTotal > 0m ? (item.Total / grandTotal) * 100m : 0m;
-
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
                 <tr>
-                    <td style="color: @(item.ColorCode ?? "#000")">
-                        @(item.Icon ?? "") @item.CategoryName
-                    </td>
-
-                    <td><strong>$@item.Total.ToString("N2")</strong></td>
-
-                    <td>
-                        <div class="progress">
-                            <div class="progress-bar"
-                                 style="width: @percentage%; background-color: @(item.ColorCode ?? "#000")">
-                                @percentage.ToString("N0")%
-                            </div>
-                        </div>
-                    </td>
-
-                    <td>@item.Count transactions</td>
+                    <th>Category</th>
+                    <th>Total</th>
+                    <th>Percentage</th>
+                    <th>Count</th>
                 </tr>
-            }
-        </tbody>
+            </thead>
 
-        <tfoot>
-            <tr>
-                <td><strong>Total</strong></td>
-                <td><strong>$@grandTotal.ToString("N2")</strong></td>
-                <td></td>
-                <td><strong>@categoryBreakdown.Sum(x => x.Count)</strong></td>
-            </tr>
-        </tfoot>
-    </table>
+            <tbody>
+                @foreach (var item in categoryBreakdown.OrderByDescending(x => x.Total))
+                {
+                    var percentage = grandTotal > 0m ? (item.Total / grandTotal) * 100m : 0m;
+
+                    <tr>
+                        <td style="color: @(item.ColorCode ?? "#000")">
+                            @(item.Icon ?? "") @item.CategoryName
+                        </td>
+
+                        <td><strong>$@item.Total.ToString("N2")</strong></td>
+
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar"
+                                     style="width: @percentage%; background-color: @(item.ColorCode ?? "#000")">
+                                    @percentage.ToString("N0")%
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>@item.Count transactions</td>
+                    </tr>
+                }
+            </tbody>
+
+            <tfoot>
+                <tr>
+                    <td><strong>Total</strong></td>
+                    <td><strong>$@grandTotal.ToString("N2")</strong></td>
+                    <td></td>
+                    <td><strong>@categoryBreakdown.Sum(x => x.Count)</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 }
 
 @code {

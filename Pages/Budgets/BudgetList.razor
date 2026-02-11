@@ -33,55 +33,57 @@ else if (budgets == null || !budgets.Any())
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Period</th>
-                <th>Budget Amount</th>
-                <th>Actual Spent</th>
-                <th>Remaining</th>
-                <th>Status</th>
-                <th class="text-end">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var budget in budgets)
-            {
-                // Important logic: for each budget month, show total spent and remaining.
-                var spent = GetSpentAmount(budget);
-                var remaining = budget.Amount - spent;
-
-                // Avoid divide-by-zero when calculating usage percentage.
-                var percentage = budget.Amount <= 0 ? 0 : (spent / budget.Amount) * 100;
-
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
                 <tr>
-                    <td>@GetMonthName(budget.Month) @budget.Year</td>
-                    <td>$@budget.Amount.ToString("N2")</td>
-                    <td>$@spent.ToString("N2")</td>
-                    <td>$@remaining.ToString("N2")</td>
-                    <td>
-                        @if (percentage < 80)
-                        {
-                            <span class="badge bg-success">On Track</span>
-                        }
-                        else if (percentage < 100)
-                        {
-                            <span class="badge bg-warning">Warning</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-danger">Over Budget</span>
-                        }
-                    </td>
-                    <td class="text-end">
-                        <a class="btn btn-sm btn-outline-primary"                           href="/budgets/edit/@budget.Id">
-                            ✏️ Edit
-                        </a>
-                    </td>
+                    <th>Period</th>
+                    <th>Budget Amount</th>
+                    <th>Actual Spent</th>
+                    <th>Remaining</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var budget in budgets)
+                {
+                    // Important logic: for each budget month, show total spent and remaining.
+                    var spent = GetSpentAmount(budget);
+                    var remaining = budget.Amount - spent;
+
+                    // Avoid divide-by-zero when calculating usage percentage.
+                    var percentage = budget.Amount <= 0 ? 0 : (spent / budget.Amount) * 100;
+
+                    <tr>
+                        <td>@GetMonthName(budget.Month) @budget.Year</td>
+                        <td>$@budget.Amount.ToString("N2")</td>
+                        <td>$@spent.ToString("N2")</td>
+                        <td>$@remaining.ToString("N2")</td>
+                        <td>
+                            @if (percentage < 80)
+                            {
+                                <span class="badge bg-success">On Track</span>
+                            }
+                            else if (percentage < 100)
+                            {
+                                <span class="badge bg-warning">Warning</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Over Budget</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" href="/budgets/edit/@budget.Id">
+                                ✏️ Edit
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
 @code {

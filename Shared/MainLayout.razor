@@ -1,14 +1,26 @@
 @using FamilyBudgetExpenseTracker.Services
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Routing
 @inherits LayoutComponentBase
+@implements IDisposable
 
 <div class="page">
-    <div class="sidebar">
+    @* Mobile overlay for off-canvas sidebar *@
+    <div class="sidebar-overlay @(sidebarOpen ? "show" : "")" @onclick="CloseSidebar" role="button"
+         aria-label="Close navigation">
+    </div>
+
+    <div class="sidebar @(sidebarOpen ? "open" : "")">
         <NavMenu />
     </div>
 
     <main>
         <div class="top-row px-4">
+            <button class="sidebar-toggle" type="button" title="Open navigation" @onclick="ToggleSidebar"
+                    aria-label="Open navigation">
+                ☰
+            </button>
+
             <span>👤 @(UserState.CurrentUserName ?? "Guest")</span>
         </div>
 
@@ -30,4 +42,28 @@
 
 @code {
     [Inject] public UserState UserState { get; set; } = default!;
+    [Inject] public NavigationManager NavManager { get; set; } = default!;
+
+    private bool sidebarOpen;
+
+    protected override void OnInitialized()
+    {
+        NavManager.LocationChanged += HandleLocationChanged;
+    }
+
+    private void ToggleSidebar() => sidebarOpen = !sidebarOpen;
+
+    private void CloseSidebar() => sidebarOpen = false;
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // Close off-canvas sidebar after navigating (mobile/tablet)
+        sidebarOpen = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        NavManager.LocationChanged -= HandleLocationChanged;
+    }
 }

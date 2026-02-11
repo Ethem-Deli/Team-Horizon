@@ -115,6 +115,27 @@ main {
     color: #dc2626;
 }
 
+/* Mobile off-canvas overlay + hamburger (hidden on desktop) */
+.sidebar-overlay {
+    display: none;
+}
+
+.sidebar-toggle {
+    display: none;
+    border: 0;
+    background: transparent;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    line-height: 1;
+    font-size: 1.25rem;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(17, 24, 39, 0.06);
+}
+
 .content {
     flex: 1;
     overflow-y: auto;
@@ -282,6 +303,18 @@ main {
 .table tfoot td {
     padding: 1rem;
     border-top: 2px solid var(--border-color);
+}
+
+/* Wrap tables in this container to make them scroll on small screens */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive .table {
+    min-width: 640px;
+    /* prevents columns from crushing on mobile */
 }
 
 /* ==========================================
@@ -634,7 +667,48 @@ h5 {
    RESPONSIVE DESIGN
    ========================================== */
 
+/* Tablet adjustments */
+@media (max-width: 1024px) {
+    :root {
+        --sidebar-width: 220px;
+    }
+
+    .content {
+        padding: 1.5rem;
+    }
+
+    .top-row {
+        padding: 1rem 1.5rem;
+    }
+}
+
 @media (max-width: 768px) {
+
+    /* Show hamburger button in the top bar */
+    .sidebar-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.5rem;
+    }
+
+    /* Full-screen overlay behind the off-canvas sidebar */
+    .sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(17, 24, 39, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        z-index: 999;
+    }
+
+    .sidebar-overlay.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
     .sidebar {
         position: fixed;
         left: -var(--sidebar-width);
@@ -657,6 +731,7 @@ h5 {
 
     .top-row {
         padding: 1rem;
+        gap: 0.5rem;
     }
 
     .row {
@@ -780,34 +855,20 @@ h5 {
         page-break-inside: avoid;
     }
 }
+@media (max-width: 768px) {
 
-.card {
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+    /* Make action buttons wrap nicely */
+    td .btn {
+        margin-bottom: 0.35rem;
+    }
 
-.nav-section {
-    font-weight: bold;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-    color: #666;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-}
+    /* If multiple buttons exist, allow wrap */
+    td {
+        word-break: break-word;
+    }
 
-.progress {
-    height: 25px;
-}
-
-.badge {
-    font-size: 0.9rem;
-}
-
-.top-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+    /* Forms: make selects/inputs full-width in grid layouts */
+    .row>[class*="col-"] {
+        grid-column: 1 / -1;
+    }
 }

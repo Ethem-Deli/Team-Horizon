@@ -88,8 +88,7 @@ else
         </div>
         <div class="progress" style="height: 25px;">
             <div class="progress-bar @(report.PercentageUsed > 100 ? "bg-danger" : report.PercentageUsed > 80 ? "bg-warning" : "bg-success")"
-                role="progressbar" style="width: @(Math.Min(report.PercentageUsed, 100))%;">
-            </div>
+                 role="progressbar" style="width: @(Math.Min(report.PercentageUsed, 100))%;"></div>
         </div>
     </div>
 
@@ -101,25 +100,27 @@ else
                     <h5 class="mb-0">Spending by Category</h5>
                 </div>
                 <div class="card-body">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th class="text-end">Amount</th>
-                                <th class="text-end">%</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var cat in report.CategorySummaries)
-                            {
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
                                 <tr>
-                                    <td>@cat.CategoryName <small class="text-muted">(@cat.TransactionCount)</small></td>
-                                    <td class="text-end">$@cat.TotalSpent.ToString("N2")</td>
-                                    <td class="text-end">@cat.PercentageOfTotalSpending.ToString("N0")%</td>
+                                    <th>Category</th>
+                                    <th class="text-end">Amount</th>
+                                    <th class="text-end">%</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var cat in report.CategorySummaries)
+                                {
+                                    <tr>
+                                        <td>@cat.CategoryName <small class="text-muted">(@cat.TransactionCount)</small></td>
+                                        <td class="text-end">$@cat.TotalSpent.ToString("N2")</td>
+                                        <td class="text-end">@cat.PercentageOfTotalSpending.ToString("N0")%</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -175,9 +176,9 @@ else
     private async Task LoadReport()
     {
         report = await ReportService.GetMonthlyReportAsync(
-        UserState.CurrentUserId,
-        selectedYear,
-        selectedMonth
+            UserState.CurrentUserId,
+            selectedYear,
+            selectedMonth
         );
     }
 }
