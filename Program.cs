@@ -1,3 +1,4 @@
+using System.IO;
 using FamilyBudgetExpenseTracker.Data;
 using FamilyBudgetExpenseTracker.Services;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -14,9 +15,12 @@ builder.Services.AddServerSideBlazor(options =>
     options.DetailedErrors = builder.Environment.IsDevelopment();
 });
 
-// Database
+// Ensure temp folder exists (Render Free supports /tmp)
+Directory.CreateDirectory("/tmp");
+
+// Database (Render Free: store SQLite in /tmp)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite("Data Source=/var/data/familybudget.db"));
+    options.UseSqlite("Data Source=/tmp/familybudget.db"));
 
 // ✅ REQUIRED: Enables session storage used by UserState (prevents logout on refresh)
 builder.Services.AddScoped<ProtectedSessionStorage>();
@@ -37,6 +41,13 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, AppAuthStateProvider>();
 
 var app = builder.Build();
+
+// Bind to Render’s PORT if provided
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+{
+    app.Urls.Add($"http://0.0.0.0:{port}");
+}
 
 if (!app.Environment.IsDevelopment())
 {
