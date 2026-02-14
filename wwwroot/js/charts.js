@@ -1,4 +1,3 @@
-// wwwroot/js/charts.js
 window.budgetCharts = (function () {
   const chartInstances = new Map();
 
