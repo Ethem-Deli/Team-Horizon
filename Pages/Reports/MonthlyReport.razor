@@ -10,11 +10,11 @@
 
 <PageTitle>Monthly Report - @(new DateTime(selectedYear, selectedMonth, 1).ToString("MMMM yyyy"))</PageTitle>
 
-<div class="container py-4">
+<div class="container-fluid py-4">
     <h2 class="mb-3">📈 Monthly Report</h2>
 
     <div class="row mb-4 bg-light p-3 rounded">
-        <div class="col-md-3">
+        <div class="col-12 col-md-3">
             <label class="form-label">Month</label>
             <select @bind="selectedMonth" class="form-select">
                 @for (int i = 1; i <= 12; i++)
@@ -24,7 +24,7 @@
             </select>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-12 col-md-3">
             <label class="form-label">Year</label>
             <select @bind="selectedYear" class="form-select">
                 @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
@@ -34,7 +34,7 @@
             </select>
         </div>
 
-        <div class="col-md-3 d-flex align-items-end">
+        <div class="col-12 col-md-3 d-flex align-items-end">
             <button @onclick="LoadReport" class="btn btn-primary w-100" disabled="@loading">
                 @if (loading)
                 {
@@ -63,8 +63,9 @@
     }
     else
     {
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
+        <!-- Top Summary Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
                 <div class="card border-primary h-100">
                     <div class="card-body text-center">
                         <h6 class="text-muted">Monthly Budget</h6>
@@ -73,7 +74,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-12 col-md-4">
                 <div class="card border-danger h-100">
                     <div class="card-body text-center">
                         <h6 class="text-muted">Total Spent</h6>
@@ -82,7 +83,7 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-12 col-md-4">
                 <div class="card @(report.IsOverBudget ? "border-warning" : "border-success") h-100">
                     <div class="card-body text-center">
                         <h6 class="text-muted">@(report.RemainingBalance < 0 ? "Over Budget" : "Remaining")</h6>
@@ -94,6 +95,7 @@
             </div>
         </div>
 
+        <!-- Visual Progress Bar -->
         <div class="mb-4">
             <div class="d-flex justify-content-between mb-1">
                 <span>Budget Usage</span>
@@ -103,11 +105,13 @@
             <div class="progress" style="height: 25px;">
                 <div class="progress-bar @(report.PercentageUsed > 100 ? "bg-danger" : report.PercentageUsed > 80 ? "bg-warning" : "bg-success")"
                      role="progressbar"
-                     style="width: @(Math.Min(report.PercentageUsed, 100))%;"></div>
+                     style="width: @(Math.Min(report.PercentageUsed, 100))%;">
+                </div>
             </div>
         </div>
 
-        <div class="row g-3 mb-3">
+        <!-- Charts -->
+        <div class="row g-3 mb-4">
             <div class="col-12 col-lg-7">
                 <div class="card shadow-sm h-100">
                     <div class="card-body">
@@ -131,18 +135,21 @@
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-lg-5 mb-4">
-                <div class="card shadow-sm">
+        <!-- Bigger layout for Category + Transactions -->
+        <div class="row g-3">
+            <!-- Category Breakdown -->
+            <div class="col-12 col-xl-4 mb-4">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-white">
                         <h5 class="mb-0">Spending by Category</h5>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm">
+                        <!-- Scroll only on small screens -->
+                        <div class="table-responsive-md">
+                            <table class="table table-sm align-middle">
                                 <thead>
                                     <tr>
-                                        <th>Category</th>
+                                        <th class="text-wrap">Category</th>
                                         <th class="text-end">Amount</th>
                                         <th class="text-end">%</th>
                                     </tr>
@@ -151,7 +158,9 @@
                                     @foreach (var cat in report.CategorySummaries)
                                     {
                                         <tr>
-                                            <td>@cat.CategoryName <small class="text-muted">(@cat.TransactionCount)</small></td>
+                                            <td class="text-wrap">
+                                                @cat.CategoryName <small class="text-muted">(@cat.TransactionCount)</small>
+                                            </td>
                                             <td class="text-end">$@cat.TotalSpent.ToString("N2")</td>
                                             <td class="text-end">@cat.PercentageOfTotalSpending.ToString("N0")%</td>
                                         </tr>
@@ -163,19 +172,22 @@
                 </div>
             </div>
 
-            <div class="col-lg-7 mb-4">
-                <div class="card shadow-sm">
+            <!-- Transactions -->
+            <div class="col-12 col-xl-8 mb-4">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-white">
                         <h5 class="mb-0">Transactions</h5>
                     </div>
+
                     <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
+                        <!-- Scroll only on small screens -->
+                        <div class="table-responsive-md">
+                            <table class="table table-hover mb-0 align-middle">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Date</th>
+                                        <th style="width:120px;">Date</th>
                                         <th>Description</th>
-                                        <th class="text-end">Amount</th>
+                                        <th style="width:140px;" class="text-end">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -183,7 +195,7 @@
                                     {
                                         <tr>
                                             <td>@expense.Date.ToString("MMM dd")</td>
-                                            <td>
+                                            <td class="text-wrap" style="white-space: normal;">
                                                 <div class="fw-bold">@expense.Description</div>
                                                 <small class="text-muted">@expense.Category?.Name</small>
                                             </td>
@@ -194,6 +206,7 @@
                             </table>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -245,7 +258,6 @@
         if (report == null || report.Expenses == null || report.Expenses.Count == 0)
             return;
 
-        // Daily bar chart
         var daily = report.Expenses
             .GroupBy(e => e.Date.Date)
             .OrderBy(g => g.Key)
@@ -257,7 +269,6 @@
 
         await JS.InvokeVoidAsync("budgetCharts.renderBar", "monthlyDailyBarChart", dayLabels, dayValues);
 
-        // Category pie chart
         var cats = report.CategorySummaries
             .Where(x => x.TotalSpent > 0)
             .OrderByDescending(x => x.TotalSpent)

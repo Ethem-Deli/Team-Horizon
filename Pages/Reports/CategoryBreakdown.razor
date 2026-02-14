@@ -15,7 +15,7 @@
 
 <PageTitle>Expense Breakdown by Category</PageTitle>
 
-<div class="container py-4">
+<div class="container-fluid py-4">
     <div class="d-flex align-items-center justify-content-between mb-3">
         <h2 class="m-0">🥧 Expense Breakdown by Category</h2>
     </div>
@@ -87,6 +87,7 @@
     {
         var grandTotal = categoryBreakdown.Sum(x => x.Total);
 
+        <!-- Charts -->
         <div class="row g-3 mb-3">
             <div class="col-12 col-lg-6">
                 <div class="card shadow-sm h-100">
@@ -111,16 +112,18 @@
             </div>
         </div>
 
+        <!-- Table -->
         <div class="card shadow-sm">
             <div class="card-body">
-                <div class="table-responsive">
+                <!-- Scroll only on small screens -->
+                <div class="table-responsive-md">
                     <table class="table align-middle">
                         <thead>
                             <tr>
-                                <th>Category</th>
-                                <th class="text-end">Total</th>
-                                <th style="min-width:220px;">Percentage</th>
-                                <th class="text-end">Count</th>
+                                <th class="text-wrap">Category</th>
+                                <th class="text-end" style="width: 140px;">Total</th>
+                                <th style="min-width: 260px;">Percentage</th>
+                                <th class="text-end" style="width: 100px;">Count</th>
                             </tr>
                         </thead>
 
@@ -130,18 +133,23 @@
                                 var percentage = grandTotal > 0m ? (item.Total / grandTotal) * 100m : 0m;
 
                                 <tr>
-                                    <td style="color:@(item.ColorCode ?? "#000")">
+                                    <td class="text-wrap" style="color:@(item.ColorCode ?? "#000")">
                                         @(item.Icon ?? "") @item.CategoryName
                                     </td>
-                                    <td class="text-end"><strong>$@item.Total.ToString("N2")</strong></td>
+
+                                    <td class="text-end">
+                                        <strong>$@item.Total.ToString("N2")</strong>
+                                    </td>
+
                                     <td>
-                                        <div class="progress" style="height:22px;">
+                                        <div class="progress" style="height: 22px;">
                                             <div class="progress-bar" role="progressbar"
                                                  style="width:@percentage%; background-color:@(item.ColorCode ?? "#000")">
                                                 @percentage.ToString("N0")%
                                             </div>
                                         </div>
                                     </td>
+
                                     <td class="text-end">@item.Count</td>
                                 </tr>
                             }
