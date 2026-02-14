@@ -37,6 +37,7 @@
                                 <label class="form-label fw-bold">Description</label>
                                 <InputTextArea @bind-Value="category.Description" class="form-control" rows="2"
                                                placeholder="Optional notes about this category" />
+                                <ValidationMessage For="@(() => category.Description)" />
                             </div>
 
                             <div class="row">
@@ -48,12 +49,14 @@
                                         <span class="input-group-text bg-white">@category.Icon</span>
                                     </div>
                                     <small class="text-muted">Use any emoji</small>
+                                    <ValidationMessage For="@(() => category.Icon)" />
                                 </div>
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">Color Theme</label>
                                     <input type="color" @bind="category.ColorCode"
                                            class="form-control form-control-color w-100" />
+                                    <ValidationMessage For="@(() => category.ColorCode)" />
                                 </div>
                             </div>
 
@@ -110,7 +113,7 @@
         }
         else
         {
-            errorMessage = "Could not update category. It may have been deleted or moved.";
+            errorMessage = "Could not update category. Check your inputs (and make sure the name is unique).";
             isSaving = false;
         }
     }

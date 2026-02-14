@@ -40,17 +40,20 @@ else
         <div class="mb-3">
             <label class="form-label">Amount:</label>
             <InputNumber @bind-Value="expense.Amount" class="form-control" />
+            <ValidationMessage For="@(() => expense.Amount)" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Date:</label>
             <!-- ✅ Expense.Date is DateTime, so bind using InputDate -->
             <InputDate @bind-Value="expense.Date" class="form-control" />
+            <ValidationMessage For="@(() => expense.Date)" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Description:</label>
             <InputText @bind-Value="expense.Description" class="form-control" />
+            <ValidationMessage For="@(() => expense.Description)" />
         </div>
 
         <div class="mb-3">
@@ -62,6 +65,7 @@ else
                     <option value="@category.Id">@category.Icon @category.Name</option>
                 }
             </InputSelect>
+            <ValidationMessage For="@(() => expense.CategoryId)" />
         </div>
 
         <div class="d-flex gap-2">
@@ -130,24 +134,9 @@ else
             return;
         }
 
-        // Simple validation (assignment-friendly)
-        if (expense.Amount <= 0)
-        {
-            error = "Amount must be greater than 0.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(expense.Description))
-        {
-            error = "Description is required.";
-            return;
-        }
-
-        if (expense.CategoryId <= 0)
-        {
-            error = "Please select a category.";
-            return;
-        }
+        // Defense-in-depth cleanup (DataAnnotations already validated the model)
+        expense.Amount = decimal.Round(expense.Amount, 2);
+        expense.Description = (expense.Description ?? string.Empty).Trim();
 
         saving = true;
         error = null;

@@ -54,6 +54,16 @@ namespace FamilyBudgetExpenseTracker.Services
             // SECURITY: Do not allow inserting categories without a valid user.
             if (category == null || category.UserId <= 0) return false;
 
+            NormalizeCategoryInput(category);
+
+            // Prevent duplicate names per user (case-insensitive)
+            var normalized = category.Name.ToLowerInvariant();
+            var exists = await _db.Categories
+                .AsNoTracking()
+                .AnyAsync(c => c.UserId == category.UserId && c.Name.ToLower() == normalized);
+
+            if (exists) return false;
+
             _db.Categories.Add(category);
             return await _db.SaveChangesAsync() > 0;
         }
@@ -63,11 +73,21 @@ namespace FamilyBudgetExpenseTracker.Services
             // SECURITY: Only allow updates for a valid logged-in user.
             if (category == null || userId <= 0) return false;
 
+            NormalizeCategoryInput(category);
+
             // SECURITY: Update only if the category belongs to this user (Id + UserId check).
             var existing = await _db.Categories
                 .FirstOrDefaultAsync(c => c.Id == category.Id && c.UserId == userId);
 
             if (existing == null) return false;
+
+            // Prevent duplicate names per user (case-insensitive), excluding current id
+            var normalized = category.Name.ToLowerInvariant();
+            var duplicate = await _db.Categories
+                .AsNoTracking()
+                .AnyAsync(c => c.UserId == userId && c.Id != category.Id && c.Name.ToLower() == normalized);
+
+            if (duplicate) return false;
 
             // Update only allowed fields (ownership stays unchanged).
             existing.Name = category.Name;
@@ -77,6 +97,14 @@ namespace FamilyBudgetExpenseTracker.Services
 
             _db.Categories.Update(existing);
             return await _db.SaveChangesAsync() > 0;
+        }
+
+        private static void NormalizeCategoryInput(Category category)
+        {
+            category.Name = (category.Name ?? string.Empty).Trim();
+            category.Description = string.IsNullOrWhiteSpace(category.Description) ? null : category.Description.Trim();
+            category.Icon = string.IsNullOrWhiteSpace(category.Icon) ? "📁" : category.Icon.Trim();
+            category.ColorCode = string.IsNullOrWhiteSpace(category.ColorCode) ? "#3498db" : category.ColorCode.Trim();
         }
 
         public async Task<bool> DeleteCategoryAsync(int categoryId, int userId)

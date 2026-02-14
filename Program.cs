@@ -34,7 +34,7 @@ else
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 
-// ✅ REQUIRED: Enables session storage used by UserState
+//REQUIRED: Enables session storage used by UserState
 builder.Services.AddScoped<ProtectedSessionStorage>();
 
 // App State & Reports
