@@ -28,7 +28,7 @@ namespace FamilyBudgetExpenseTracker.Services
             // Verify password hash
             if (user != null && PasswordHasher.Verify(password, user.PasswordHash))
             {
-                // ✅ Persist session login (refresh will stay logged in)
+                //  Persist session login (refresh will stay logged in)
                 await _userState.LoginAsync(user);
                 return user;
             }
@@ -43,7 +43,7 @@ namespace FamilyBudgetExpenseTracker.Services
                 u.Email.ToLower() == email.ToLower());
         }
 
-        // ✅ Interface requires Logout() (sync). Keep it and call async internally.
+        //  Interface requires Logout() (sync). Keep it and call async internally.
         public void Logout()
         {
             _userState.Logout(); // uses compatibility wrapper -> LogoutAsync()

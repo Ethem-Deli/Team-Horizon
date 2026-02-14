@@ -43,7 +43,7 @@ namespace FamilyBudgetExpenseTracker.Services
             }
         }
 
-        // ✅ NEW: Async login (recommended)
+        //  NEW: Async login (recommended)
         public async Task LoginAsync(User user)
         {
             CurrentUser = user;
@@ -51,7 +51,7 @@ namespace FamilyBudgetExpenseTracker.Services
             NotifyStateChanged();
         }
 
-        // ✅ NEW: Async logout (recommended)
+        //  NEW: Async logout (recommended)
         public async Task LogoutAsync()
         {
             CurrentUser = null;
@@ -59,14 +59,14 @@ namespace FamilyBudgetExpenseTracker.Services
             NotifyStateChanged();
         }
 
-        // ✅ COMPATIBILITY: old sync method still used by some files
+        //  COMPATIBILITY: old sync method still used by some files
         public void Login(User user)
         {
             // Fire-and-forget (good enough for assignment)
             _ = LoginAsync(user);
         }
 
-        // ✅ COMPATIBILITY: old sync method still used by some files
+        //  COMPATIBILITY: old sync method still used by some files
         public void Logout()
         {
             _ = LogoutAsync();
