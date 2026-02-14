@@ -46,6 +46,15 @@ namespace FamilyBudgetExpenseTracker.Services
             return await _db.SaveChangesAsync() > 0;
         }
 
+        public async Task<Budget?> GetBudgetAsync(int userId, int year, int month)
+        {
+            return await _db.Budgets
+                .FirstOrDefaultAsync(b =>
+                    b.UserId == userId &&
+                    b.Year == year &&
+                    b.Month == month);
+        }
+
         public async Task<bool> DeleteBudgetAsync(int budgetId, int userId)
         {
             var budget = await _db.Budgets

@@ -4,6 +4,12 @@
 @inject IBudgetService BudgetService
 @inject IExpenseService ExpenseService
 @inject UserState UserState
+@inject NavigationManager Nav
+
+private void GoToOverview(Budget budget)
+{
+    Nav.NavigateTo($"/budgets/overview/{budget.Year}/{budget.Month}");
+}
 
 <PageTitle>Budgets</PageTitle>
 
@@ -59,6 +65,12 @@ else
                             <span class="badge bg-danger">Over Budget</span>
                         }
                     </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                            @onclick="() => GoToOverview(budget)">
+                            View
+                        </button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -79,7 +91,6 @@ else
         {
             var startDate = new DateTime(budget.Year, budget.Month, 1);
             var endDate = startDate.AddMonths(1);
-
 
             var spent1 = await ExpenseService.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startDate);
             @* var spent = spent1.Sum(e => e.Amount); *@

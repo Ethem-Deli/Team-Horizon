@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/FamilyBudgetExpenseTracker.csproj": {}
+    "C:\\Users\\ajhal\\Documents\\BYU Idaho 2025-2026\\CSE 325 - .NET Software Development - Winter 2026\\Group_Project\\Team-Horizon\\FamilyBudgetExpenseTracker.csproj": {}
   },
   "projects": {
-    "/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/FamilyBudgetExpenseTracker.csproj": {
+    "C:\\Users\\ajhal\\Documents\\BYU Idaho 2025-2026\\CSE 325 - .NET Software Development - Winter 2026\\Group_Project\\Team-Horizon\\FamilyBudgetExpenseTracker.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/FamilyBudgetExpenseTracker.csproj",
+        "projectUniqueName": "C:\\Users\\ajhal\\Documents\\BYU Idaho 2025-2026\\CSE 325 - .NET Software Development - Winter 2026\\Group_Project\\Team-Horizon\\FamilyBudgetExpenseTracker.csproj",
         "projectName": "FamilyBudgetExpenseTracker",
-        "projectPath": "/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/FamilyBudgetExpenseTracker.csproj",
-        "packagesPath": "/Users/Dommmy/.nuget/packages/",
-        "outputPath": "/Users/Dommmy/Documents/FamilyBudgetExpenseTracker/obj/",
+        "projectPath": "C:\\Users\\ajhal\\Documents\\BYU Idaho 2025-2026\\CSE 325 - .NET Software Development - Winter 2026\\Group_Project\\Team-Horizon\\FamilyBudgetExpenseTracker.csproj",
+        "packagesPath": "C:\\Users\\ajhal\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\ajhal\\Documents\\BYU Idaho 2025-2026\\CSE 325 - .NET Software Development - Winter 2026\\Group_Project\\Team-Horizon\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/Dommmy/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\ajhal\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -77,15 +77,19 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.22, 8.0.22]"
+              "version": "[8.0.23, 8.0.23]"
             },
             {
-              "name": "Microsoft.NETCore.App.Host.osx-x64",
-              "version": "[8.0.22, 8.0.22]"
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.23, 8.0.23]"
             },
             {
               "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.22, 8.0.22]"
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
             }
           ],
           "frameworkReferences": {
@@ -96,7 +100,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.101/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -43,7 +43,7 @@ namespace FamilyBudgetExpenseTracker.Security
                     numBytesRequested: 256 / 8));
 
                 return storedHash == computedHash;
-            }
+            } 
             catch
             {
                 return false;

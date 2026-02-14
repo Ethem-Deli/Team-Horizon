@@ -45,6 +45,17 @@ namespace FamilyBudgetExpenseTracker.Services
             return expenses.Sum(e => e.Amount);
         }
 
+        public async Task<List<Expense>> GetExpensesForMonthAsync(int userId, DateTime monthStart)
+        {
+            var monthEnd = monthStart.AddMonths(1);
+
+            return await _db.Expenses
+                .Where(e => e.UserId == userId &&
+                            e.Date >= monthStart &&
+                            e.Date < monthEnd)
+                .ToListAsync();
+        }
+
         public async Task<bool> AddExpenseAsync(Expense expense)
         {
             _db.Expenses.Add(expense);
