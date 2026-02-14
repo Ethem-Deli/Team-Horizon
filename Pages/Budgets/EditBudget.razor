@@ -2,6 +2,7 @@
 
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.JSInterop
 @using FamilyBudgetExpenseTracker.Data
@@ -26,7 +27,7 @@
 
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <h3 class="card-title mb-0">✏️ Edit Budget</h3>
-                        <a class="btn btn-outline-secondary btn-sm" href="/budgets">Back</a>
+                        <NavLink class="btn btn-outline-secondary btn-sm" href="/budgets">Back</NavLink>
                     </div>
 
                     @if (isLoading)
@@ -38,7 +39,7 @@
                         <div class="alert alert-warning">
                             Budget not found (or you don’t have access).
                         </div>
-                        <a class="btn btn-primary" href="/budgets">Go to Budgets</a>
+                        <NavLink class="btn btn-primary" href="/budgets">Go to Budgets</NavLink>
                     }
                     else
                     {
@@ -126,7 +127,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // SECURITY: Must be logged in (and have a valid user id) to load any data.
         if (UserState.CurrentUserId <= 0)
         {
             Navigation.NavigateTo("/account/login");
@@ -135,19 +135,15 @@
 
         try
         {
-            // SECURITY: Load ONLY a budget that belongs to the current user (Id + UserId).
             budget = await DbContext.Budgets
                 .AsTracking()
                 .FirstOrDefaultAsync(b => b.Id == Id && b.UserId == UserState.CurrentUserId);
 
             if (budget == null)
-            {
                 notFound = true;
-            }
         }
         catch
         {
-            // Friendly error: do not expose exception/DB details.
             notFound = true;
         }
         finally
@@ -160,10 +156,10 @@
     {
         if (isSaving || budget == null) return;
 
-        // SECURITY: Prevent cross-user updates if something was tampered.
+        // Prevent cross-user updates if something was tampered
         if (budget.UserId != UserState.CurrentUserId)
         {
-            Navigation.NavigateTo("/budgets", forceLoad: true);
+            Navigation.NavigateTo("/budgets"); // no forceLoad
             return;
         }
 
@@ -175,9 +171,6 @@
         {
             budget.Amount = decimal.Round(budget.Amount, 2);
 
-            // Important logic:
-            // Prevent duplicate budgets if the user changes Month/Year to an existing period.
-            // SECURITY: duplicate check must also be scoped to the current user.
             var duplicate = await DbContext.Budgets
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b =>
@@ -192,10 +185,8 @@
                 return;
             }
 
-            // SECURITY: Ensure ownership is correct and cannot be overwritten.
             budget.UserId = UserState.CurrentUserId;
 
-            // Save via service (service contains user isolation rules too).
             var ok = await BudgetService.UpsertBudgetAsync(budget);
             if (!ok)
             {
@@ -204,11 +195,10 @@
             }
 
             successMessage = "Budget updated successfully.";
-            Navigation.NavigateTo("/budgets", forceLoad: true);
+            Navigation.NavigateTo("/budgets"); // no forceLoad
         }
         catch
         {
-            // Friendly error: no sensitive information shown.
             errorMessage = "Could not update budget. Please check the fields and try again.";
         }
         finally
@@ -221,14 +211,12 @@
     {
         if (budget == null || isSaving) return;
 
-        // SECURITY: Ensure user still owns this budget before deleting.
         if (budget.UserId != UserState.CurrentUserId)
         {
-            Navigation.NavigateTo("/budgets", forceLoad: true);
+            Navigation.NavigateTo("/budgets"); // no forceLoad
             return;
         }
 
-        // Important logic: confirm destructive action with the user.
         var period = $"{new DateTime(2000, budget.Month, 1):MMMM} {budget.Year}";
         var ok = await JS.InvokeAsync<bool>("confirm", $"Delete the budget for {period}? This cannot be undone.");
 
@@ -239,7 +227,6 @@
 
         try
         {
-            // SECURITY: Delete only if (BudgetId + UserId) matches.
             var deleted = await BudgetService.DeleteBudgetAsync(budget.Id, UserState.CurrentUserId);
             if (!deleted)
             {
@@ -247,11 +234,10 @@
                 return;
             }
 
-            Navigation.NavigateTo("/budgets", forceLoad: true);
+            Navigation.NavigateTo("/budgets"); // no forceLoad
         }
         catch
         {
-            // Friendly error message
             errorMessage = "Could not delete budget. Please try again.";
         }
         finally

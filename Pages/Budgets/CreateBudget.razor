@@ -1,11 +1,13 @@
 @page "/budgets/create"
 
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize]
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Routing
 @using FamilyBudgetExpenseTracker.Data
 @using FamilyBudgetExpenseTracker.Models
 @using FamilyBudgetExpenseTracker.Services
+
+@attribute [Authorize]
 
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
@@ -58,7 +60,9 @@
                             <button type="submit" class="btn btn-primary px-4" disabled="@isSaving">
                                 @(isSaving ? "Saving..." : "Save Budget")
                             </button>
-                            <a href="/budgets" class="btn btn-outline-secondary">Cancel</a>
+
+                            <!-- SPA navigation (no full reload) -->
+                            <NavLink href="/budgets" class="btn btn-outline-secondary">Cancel</NavLink>
                         </div>
                     </EditForm>
                 </div>
@@ -95,26 +99,27 @@
     private async Task HandleSubmit()
     {
         if (isSaving) return;
+
         isSaving = true;
         errorMessage = null;
 
-        // SECURITY: Must have a valid logged-in user.
+        // Must have a valid logged-in user.
         if (UserState.CurrentUserId <= 0)
         {
-            Navigation.NavigateTo("/account/login", forceLoad: true);
+            // SPA redirect (no forceLoad)
+            Navigation.NavigateTo("/account/login");
             isSaving = false;
             return;
         }
 
         try
         {
-            // SECURITY: Always assign ownership from session (never trust UI/client).
+            // Always assign ownership from session
             budget.UserId = UserState.CurrentUserId;
 
-            // Basic server-side sanity checks (defense-in-depth)
+            // Defense-in-depth
             budget.Amount = decimal.Round(budget.Amount, 2);
 
-            // If budget exists for this user/month/year, update instead of insert
             var existing = await DbContext.Budgets
                 .FirstOrDefaultAsync(b => b.UserId == budget.UserId
                                        && b.Month == budget.Month
@@ -132,8 +137,8 @@
 
             await DbContext.SaveChangesAsync();
 
-            // Force reload so auth/session state is consistent after navigation
-            Navigation.NavigateTo("/budgets", forceLoad: true);
+            // SPA navigation to list (no flicker)
+            Navigation.NavigateTo("/budgets");
         }
         catch
         {

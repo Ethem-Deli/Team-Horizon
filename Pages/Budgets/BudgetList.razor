@@ -1,9 +1,11 @@
 @page "/budgets"
 
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Routing
 @using FamilyBudgetExpenseTracker.Models
 @using FamilyBudgetExpenseTracker.Services
+
+@attribute [Authorize]
 
 @inject IBudgetService BudgetService
 @inject IExpenseService ExpenseService
@@ -14,8 +16,9 @@
 
 <h1>📊 Budgets</h1>
 
-<div class="mb-3">
-    <a href="/budgets/create" class="btn btn-primary">➕ Set New Budget</a>
+<div class="mb-3 d-flex gap-2">
+    <NavLink href="/budgets/create" class="btn btn-primary">➕ Set New Budget</NavLink>
+    <NavLink href="/budgets/overview" class="btn btn-outline-secondary">📈 Overview</NavLink>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(errorMessage))
@@ -29,7 +32,8 @@
 }
 else if (budgets == null || !budgets.Any())
 {
-    <p>No budgets set. <a href="/budgets/create">Create your first budget</a></p>
+    <p>No budgets set. <NavLink href="/budgets/create">Create your first budget</NavLink>
+    </p>
 }
 else
 {
@@ -48,11 +52,9 @@ else
             <tbody>
                 @foreach (var budget in budgets)
                 {
-                    // Important logic: for each budget month, show total spent and remaining.
                     var spent = GetSpentAmount(budget);
                     var remaining = budget.Amount - spent;
 
-                    // Avoid divide-by-zero when calculating usage percentage.
                     var percentage = budget.Amount <= 0 ? 0 : (spent / budget.Amount) * 100;
 
                     <tr>
@@ -75,9 +77,9 @@ else
                             }
                         </td>
                         <td class="text-end">
-                            <a class="btn btn-sm btn-outline-primary" href="/budgets/edit/@budget.Id">
+                            <NavLink class="btn btn-sm btn-outline-primary" href="@($"/budgets/edit/{budget.Id}")">
                                 ✏️ Edit
-                            </a>
+                            </NavLink>
                         </td>
                     </tr>
                 }
@@ -97,7 +99,6 @@ else
     {
         errorMessage = null;
 
-        // SECURITY: Must have a valid logged-in user before loading any budgets.
         if (UserState.CurrentUserId <= 0)
         {
             Navigation.NavigateTo("/account/login");
@@ -106,18 +107,13 @@ else
 
         try
         {
-            // SECURITY: Service enforces user isolation by filtering budgets by UserId.
             budgets = await BudgetService.GetUserBudgetsAsync(UserState.CurrentUserId);
 
-            // Important logic:
-            // For each budget period, compute "spent" using ExpenseService for the same user.
             spentAmounts.Clear();
 
             foreach (var budget in budgets)
             {
                 var startDate = new DateTime(budget.Year, budget.Month, 1);
-
-                // SECURITY: ExpenseService totals are filtered by UserId.
                 var totalSpent = await ExpenseService.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startDate);
                 spentAmounts[budget.Id] = totalSpent;
             }
@@ -126,7 +122,6 @@ else
         {
             errorMessage = ex.Message;
         }
-        
         finally
         {
             loading = false;
@@ -134,14 +129,8 @@ else
     }
 
     private decimal GetSpentAmount(Budget budget)
-    {
-        // Safe default if a budget id is missing from dictionary.
-        return spentAmounts.GetValueOrDefault(budget.Id, 0);
-    }
+        => spentAmounts.GetValueOrDefault(budget.Id, 0);
 
     private string GetMonthName(int month)
-    {
-        // Converts numeric month (1-12) into a readable month name.
-        return new DateTime(2000, month, 1).ToString("MMMM");
-    }
+        => new DateTime(2000, month, 1).ToString("MMMM");
 }
