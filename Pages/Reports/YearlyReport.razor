@@ -1,0 +1,303 @@
+@page "/reports/yearly"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
+@using FamilyBudgetExpenseTracker.Data
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
+
+@inject IJSRuntime JS
+@inject ApplicationDbContext DbContext
+@inject UserState UserState
+@inject NavigationManager Navigation
+
+<PageTitle>Yearly Report</PageTitle>
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="m-0">📅 Yearly Spending Report</h2>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-4 col-lg-3">
+                    <label class="form-label">Year</label>
+                    <select @bind="selectedYear" class="form-select">
+                        @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
+                        {
+                            <option value="@year">@year</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-4 col-lg-3">
+                    <button @onclick="LoadReport" class="btn btn-primary w-100" disabled="@loading">
+                        @if (loading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Loading...</span>
+                        }
+                        else
+                        {
+                            <span>Load Report</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (reportLoaded == false)
+    {
+        <div class="alert alert-info">
+            Click <strong>Load Report</strong> to view the yearly breakdown.
+        </div>
+    }
+    else if (yearTotal <= 0m)
+    {
+        <div class="alert alert-warning">
+            No expenses found for <strong>@selectedYear</strong>.
+        </div>
+    }
+    else
+    {
+        <!-- ✅ FIXED: charts must be inside a row -->
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-lg-7">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="card-title m-0">Monthly Spending (@selectedYear)</h5>
+                            <span class="badge bg-dark">Total: $@yearTotal.ToString("N2")</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="yearlyMonthlyBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-5">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Spending by Category (@selectedYear)</h5>
+                        <div class="chart-container">
+                            <canvas id="yearlyCategoryPieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Monthly Totals</h5>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in monthlyRows)
+                                    {
+                                        <tr>
+                                            <td>@row.MonthName</td>
+                                            <td class="text-end"><strong>$@row.Total.ToString("N2")</strong></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td><strong>Year Total</strong></td>
+                                        <td class="text-end"><strong>$@yearTotal.ToString("N2")</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Top Categories</h5>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th class="text-end">Total</th>
+                                        <th class="text-end">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in categoryRows.OrderByDescending(x => x.Total).Take(10))
+                                    {
+                                        var pct = yearTotal > 0m ? (row.Total / yearTotal) * 100m : 0m;
+                                        <tr>
+                                            <td style="color:@(row.ColorCode ?? "#000")">
+                                                @(row.Icon ?? "") @row.CategoryName
+                                            </td>
+                                            <td class="text-end"><strong>$@row.Total.ToString("N2")</strong></td>
+                                            <td class="text-end">@pct.ToString("N0")%</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted">Showing top 10 categories by total spend.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private int selectedYear = DateTime.Today.Year;
+
+    private bool loading;
+    private bool reportLoaded = false;
+    private string? errorMessage;
+
+    private decimal yearTotal;
+
+    private List<MonthlyTotalRow> monthlyRows = new();
+    private List<CategoryTotalRow> categoryRows = new();
+
+    private bool _pendingChartRender;
+
+    private async Task LoadReport()
+    {
+        errorMessage = null;
+        reportLoaded = false;
+        yearTotal = 0m;
+        monthlyRows.Clear();
+        categoryRows.Clear();
+
+        if (UserState.CurrentUserId <= 0)
+        {
+            Navigation.NavigateTo("/account/login");
+            return;
+        }
+
+        loading = true;
+
+        try
+        {
+            var start = new DateTime(selectedYear, 1, 1);
+            var end = start.AddYears(1);
+
+            var expenses = await DbContext.Expenses
+                .AsNoTracking()
+                .Include(e => e.Category)
+                .Where(e => e.UserId == UserState.CurrentUserId)
+                .Where(e => e.Date >= start && e.Date < end)
+                .ToListAsync();
+
+            yearTotal = expenses.Sum(e => e.Amount);
+
+            var byMonth = expenses
+                .GroupBy(e => e.Date.Month)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
+
+            for (int m = 1; m <= 12; m++)
+            {
+                byMonth.TryGetValue(m, out var total);
+                monthlyRows.Add(new MonthlyTotalRow
+                {
+                    Month = m,
+                    MonthName = new DateTime(2000, m, 1).ToString("MMMM"),
+                    Total = total
+                });
+            }
+
+            categoryRows = expenses
+                .GroupBy(e => e.CategoryId)
+                .Select(g =>
+                {
+                    var cat = g.FirstOrDefault()?.Category;
+
+                    return new CategoryTotalRow
+                    {
+                        CategoryId = g.Key,
+                        CategoryName = cat?.Name ?? "Uncategorized",
+                        Icon = cat?.Icon ?? "",
+                        ColorCode = cat?.ColorCode ?? "#000",
+                        Total = g.Sum(x => x.Amount)
+                    };
+                })
+                .OrderByDescending(x => x.Total)
+                .ToList();
+
+            reportLoaded = true;
+            _pendingChartRender = true;
+        }
+        catch
+        {
+            errorMessage = "Could not load the yearly report. Please try again.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_pendingChartRender) return;
+        _pendingChartRender = false;
+
+        await RenderChartsAsync();
+    }
+
+    private async Task RenderChartsAsync()
+    {
+        if (!reportLoaded) return;
+
+        var monthLabels = monthlyRows.Select(x => x.MonthName.Substring(0, 3)).ToList();
+        var monthValues = monthlyRows.Select(x => Convert.ToDouble(decimal.Round(x.Total, 2))).ToList();
+
+        await JS.InvokeVoidAsync("budgetCharts.renderBar", "yearlyMonthlyBarChart", monthLabels, monthValues);
+
+        var cats = categoryRows.Where(x => x.Total > 0).ToList();
+        if (cats.Count > 0)
+        {
+            var catLabels = cats.Select(x => $"{x.Icon} {x.CategoryName}".Trim()).ToList();
+            var catValues = cats.Select(x => Convert.ToDouble(decimal.Round(x.Total, 2))).ToList();
+
+            await JS.InvokeVoidAsync("budgetCharts.renderPie", "yearlyCategoryPieChart", catLabels, catValues);
+        }
+    }
+
+    private sealed class MonthlyTotalRow
+    {
+        public int Month { get; set; }
+        public string MonthName { get; set; } = "";
+        public decimal Total { get; set; }
+    }
+
+    private sealed class CategoryTotalRow
+    {
+        public int? CategoryId { get; set; }
+        public string CategoryName { get; set; } = "Uncategorized";
+        public string Icon { get; set; } = "";
+        public string ColorCode { get; set; } = "#000";
+        public decimal Total { get; set; }
+    }
+}

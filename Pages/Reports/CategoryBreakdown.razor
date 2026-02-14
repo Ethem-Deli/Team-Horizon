@@ -2,128 +2,181 @@
 
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
+@using Microsoft.JSInterop
 @using Microsoft.EntityFrameworkCore
 @using FamilyBudgetExpenseTracker.Data
 @using FamilyBudgetExpenseTracker.Models
 @using FamilyBudgetExpenseTracker.Services
 
+@inject IJSRuntime JS
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
 @inject NavigationManager Navigation
 
-<h1>🥧 Expense Breakdown by Category</h1>
+<PageTitle>Expense Breakdown by Category</PageTitle>
 
-@if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="alert alert-danger">@errorMessage</div>
-}
-
-<div class="row mb-3">
-    <div class="col-md-3">
-        <select @bind="selectedMonth" class="form-control">
-            <option value="0">All Time</option>
-            @for (int i = 1; i <= 12; i++)
-            {
-                <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
-            }
-        </select>
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="m-0">🥧 Expense Breakdown by Category</h2>
     </div>
 
-    <div class="col-md-3">
-        <select @bind="selectedYear" class="form-control" disabled="@(selectedMonth == 0)">
-            @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
-            {
-                <option value="@year">@year</option>
-            }
-        </select>
-        @if (selectedMonth == 0)
-        {
-            <small class="text-muted">Year filter is used only when a month is selected.</small>
-        }
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-4 col-lg-3">
+                    <label class="form-label">Month</label>
+                    <select @bind="selectedMonth" class="form-select">
+                        <option value="0">All Time</option>
+                        @for (int i = 1; i <= 12; i++)
+                        {
+                            <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-4 col-lg-3">
+                    <label class="form-label">Year</label>
+                    <select @bind="selectedYear" class="form-select" disabled="@(selectedMonth == 0)">
+                        @for (int year = DateTime.Today.Year; year >= DateTime.Today.Year - 5; year--)
+                        {
+                            <option value="@year">@year</option>
+                        }
+                    </select>
+
+                    @if (selectedMonth == 0)
+                    {
+                        <small class="text-muted">Year filter applies only when month is selected.</small>
+                    }
+                </div>
+
+                <div class="col-12 col-md-4 col-lg-3">
+                    <button @onclick="LoadReport" class="btn btn-primary w-100" disabled="@loading">
+                        @if (loading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Loading...</span>
+                        }
+                        else
+                        {
+                            <span>Load Report</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="col-md-3">
-        <button @onclick="LoadReport" class="btn btn-primary" disabled="@loading">
-            @(loading ? "Loading..." : "Load Report")
-        </button>
-    </div>
+    @if (categoryBreakdown == null)
+    {
+        <div class="alert alert-info">
+            Click <strong>Load Report</strong> to view breakdown.
+        </div>
+    }
+    else if (!categoryBreakdown.Any())
+    {
+        <div class="alert alert-warning">
+            No expenses found for the selected period.
+        </div>
+    }
+    else
+    {
+        var grandTotal = categoryBreakdown.Sum(x => x.Total);
+
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Spending by Category (Pie)</h5>
+                        <div class="chart-container">
+                            <canvas id="categoryPieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Spending by Category (Bar)</h5>
+                        <div class="chart-container">
+                            <canvas id="categoryBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-end">Total</th>
+                                <th style="min-width:220px;">Percentage</th>
+                                <th class="text-end">Count</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var item in categoryBreakdown.OrderByDescending(x => x.Total))
+                            {
+                                var percentage = grandTotal > 0m ? (item.Total / grandTotal) * 100m : 0m;
+
+                                <tr>
+                                    <td style="color:@(item.ColorCode ?? "#000")">
+                                        @(item.Icon ?? "") @item.CategoryName
+                                    </td>
+                                    <td class="text-end"><strong>$@item.Total.ToString("N2")</strong></td>
+                                    <td>
+                                        <div class="progress" style="height:22px;">
+                                            <div class="progress-bar" role="progressbar"
+                                                 style="width:@percentage%; background-color:@(item.ColorCode ?? "#000")">
+                                                @percentage.ToString("N0")%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">@item.Count</td>
+                                </tr>
+                            }
+                        </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <td><strong>Total</strong></td>
+                                <td class="text-end"><strong>$@grandTotal.ToString("N2")</strong></td>
+                                <td></td>
+                                <td class="text-end"><strong>@categoryBreakdown.Sum(x => x.Count)</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
 </div>
-
-@if (categoryBreakdown == null)
-{
-    <p><em>Click Load Report to view breakdown</em></p>
-}
-else if (!categoryBreakdown.Any())
-{
-    <p>No expenses for this period.</p>
-}
-else
-{
-    var grandTotal = categoryBreakdown.Sum(x => x.Total);
-
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Total</th>
-                    <th>Percentage</th>
-                    <th>Count</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                @foreach (var item in categoryBreakdown.OrderByDescending(x => x.Total))
-                {
-                    var percentage = grandTotal > 0m ? (item.Total / grandTotal) * 100m : 0m;
-
-                    <tr>
-                        <td style="color: @(item.ColorCode ?? "#000")">
-                            @(item.Icon ?? "") @item.CategoryName
-                        </td>
-
-                        <td><strong>$@item.Total.ToString("N2")</strong></td>
-
-                        <td>
-                            <div class="progress">
-                                <div class="progress-bar"
-                                     style="width: @percentage%; background-color: @(item.ColorCode ?? "#000")">
-                                    @percentage.ToString("N0")%
-                                </div>
-                            </div>
-                        </td>
-
-                        <td>@item.Count transactions</td>
-                    </tr>
-                }
-            </tbody>
-
-            <tfoot>
-                <tr>
-                    <td><strong>Total</strong></td>
-                    <td><strong>$@grandTotal.ToString("N2")</strong></td>
-                    <td></td>
-                    <td><strong>@categoryBreakdown.Sum(x => x.Count)</strong></td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-}
 
 @code {
     private int selectedMonth = 0;
     private int selectedYear = DateTime.Today.Year;
 
-    private bool loading = false;
+    private bool loading;
     private string? errorMessage;
 
     private List<CategoryBreakdownItem>? categoryBreakdown;
+
+    private bool _pendingChartRender;
 
     private async Task LoadReport()
     {
         errorMessage = null;
 
-        // SECURITY: Must have a valid logged-in user to run any report queries.
         if (UserState.CurrentUserId <= 0)
         {
             Navigation.NavigateTo("/account/login");
@@ -134,33 +187,25 @@ else
 
         try
         {
-            // SECURITY: Always filter by UserId so reports only include the current user's data.
             IQueryable<Expense> query = DbContext.Expenses
                 .AsNoTracking()
                 .Include(e => e.Category)
                 .Where(e => e.UserId == UserState.CurrentUserId);
 
-            // Important logic:
-            // If selectedMonth == 0 => All Time (no date filter).
-            // If selectedMonth > 0 => filter by selected month/year.
             if (selectedMonth > 0)
             {
                 var startDate = new DateTime(selectedYear, selectedMonth, 1);
                 var endDate = startDate.AddMonths(1);
-
                 query = query.Where(e => e.Date >= startDate && e.Date < endDate);
             }
 
             var expenses = await query.ToListAsync();
 
-            // Important logic:
-            // Group by CategoryId (nullable possible), then compute totals and counts per group.
             categoryBreakdown = expenses
                 .GroupBy(e => e.CategoryId)
                 .Select(g =>
                 {
-                    var first = g.FirstOrDefault();
-                    var cat = first?.Category;
+                    var cat = g.FirstOrDefault()?.Category;
 
                     return new CategoryBreakdownItem
                     {
@@ -172,13 +217,15 @@ else
                         Count = g.Count()
                     };
                 })
+                .OrderByDescending(x => x.Total)
                 .ToList();
+
+            _pendingChartRender = true;
         }
         catch
         {
-            // Friendly error message; do not expose stack traces or DB details.
             errorMessage = "Could not load the report. Please try again.";
-            categoryBreakdown = new List<CategoryBreakdownItem>();
+            categoryBreakdown = new();
         }
         finally
         {
@@ -186,7 +233,29 @@ else
         }
     }
 
-    private class CategoryBreakdownItem
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_pendingChartRender) return;
+        _pendingChartRender = false;
+
+        await RenderChartsAsync();
+    }
+
+    private async Task RenderChartsAsync()
+    {
+        if (categoryBreakdown == null || categoryBreakdown.Count == 0) return;
+
+        var rows = categoryBreakdown.Where(x => x.Total > 0).ToList();
+        if (rows.Count == 0) return;
+
+        var labels = rows.Select(x => $"{x.Icon} {x.CategoryName}".Trim()).ToList();
+        var values = rows.Select(x => Convert.ToDouble(decimal.Round(x.Total, 2))).ToList();
+
+        await JS.InvokeVoidAsync("budgetCharts.renderPie", "categoryPieChart", labels, values);
+        await JS.InvokeVoidAsync("budgetCharts.renderBar", "categoryBarChart", labels, values);
+    }
+
+    private sealed class CategoryBreakdownItem
     {
         public int? CategoryId { get; set; }
         public string CategoryName { get; set; } = "Uncategorized";

@@ -872,3 +872,17 @@ h5 {
         grid-column: 1 / -1;
     }
 }
+
+/* Fixed-height container to prevent Chart.js resize for feedback loop */
+.chart-container {
+    position: relative;
+    height: 360px;
+    width: 100%;
+}
+
+/* Let canvas fill the container */
+.chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
