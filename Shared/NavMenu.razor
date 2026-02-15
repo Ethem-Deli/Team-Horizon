@@ -2,11 +2,11 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Routing
 @implements IDisposable
+
 @inject UserState UserState
 @inject NavigationManager NavManager
 
 <style>
-    /* Ensure the branding is always visible and not just on hover */
     .navbar-brand {
         color: white !important;
         font-weight: bold;
@@ -17,18 +17,51 @@
 
     .nav-scrollable {
         background-color: #111827;
-        /* Dark theme sidebar */
         min-height: calc(100vh - 3.5rem);
+        display: flex;
+        flex-direction: column;
     }
 
     .user-section {
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         margin-top: auto;
-        padding: 1rem;
+        padding: 1rem 0;
     }
 
     .nav-link {
         cursor: pointer;
+        user-select: none;
+    }
+
+    .nav-group-toggle {
+        width: 100%;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        padding: .5rem 0;
+    }
+
+    .nav-submenu {
+        padding-left: 1.75rem;
+        margin-top: .25rem;
+        margin-bottom: .5rem;
+    }
+
+    .nav-submenu .nav-link {
+        padding: .35rem 0;
+        font-size: .95rem;
+        opacity: .9;
+    }
+
+    .chevron {
+        transition: transform .15s ease-in-out;
+        opacity: .8;
+    }
+
+    .chevron.open {
+        transform: rotate(90deg);
     }
 </style>
 
@@ -37,15 +70,18 @@
         <a class="navbar-brand" href="">
             <span>💰</span> Budget Tracker
         </a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+
+        <!-- Hamburger toggle is mostly for small screens -->
+        <button title="Navigation menu" class="navbar-toggler d-lg-none" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
     </div>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
+<div class="@NavMenuCssClass nav-scrollable" @onclick="OnNavContainerClick">
+    <nav class="flex-column px-3 pt-2">
+        <!-- Home / Dashboard -->
+        <div class="nav-item">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="oi @(UserState.IsAuthenticated ? "oi-dashboard" : "oi-home")" aria-hidden="true"></span>
                 @(UserState.IsAuthenticated ? "Dashboard" : "Home")
@@ -54,34 +90,77 @@
 
         @if (UserState.IsAuthenticated)
         {
-            <div class="nav-item px-3">
+            <!-- Expenses -->
+            <div class="nav-item">
                 <NavLink class="nav-link" href="expenses">
                     <span class="oi oi-list-rich" aria-hidden="true"></span> My Expenses
                 </NavLink>
             </div>
-            @* Added Categories link *@
-            <div class="nav-item px-3">
+
+            <!-- Monthly Expense Summary -->
+            <div class="nav-item">
+                <NavLink class="nav-link" href="monthly-summary">
+                    <span class="oi oi-calendar" aria-hidden="true"></span> Monthly Expense Summary
+                </NavLink>
+            </div>
+
+            <!-- Categories -->
+            <div class="nav-item">
                 <NavLink class="nav-link" href="categories">
                     <span class="oi oi-tags" aria-hidden="true"></span> Categories
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+
+            <!-- Budgets -->
+            <div class="nav-item">
                 <NavLink class="nav-link" href="budgets">
                     <span class="oi oi-credit-card" aria-hidden="true"></span> Budgets
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="reports/monthly">
-                    <span class="oi oi-graph" aria-hidden="true"></span> Monthly Report
-                </NavLink>
+
+            <!-- Reports Group -->
+            <div class="nav-item">
+                <button class="nav-link btn btn-link text-start nav-group-toggle" @onclick="ToggleReports" type="button"
+                        aria-expanded="@reportsOpen">
+                    <span>
+                        <span class="oi oi-graph" aria-hidden="true"></span>
+                        Reports
+                    </span>
+                    <span class="oi oi-chevron-right chevron @(reportsOpen ? "open" : "")" aria-hidden="true"></span>
+                </button>
+
+                @if (reportsOpen)
+                {
+                    <div class="nav-submenu">
+                        <div class="nav-item">
+                            <NavLink class="nav-link" href="reports/monthly">
+                                <span class="oi oi-calendar" aria-hidden="true"></span> Monthly Report
+                            </NavLink>
+                        </div>
+
+                        <div class="nav-item">
+                            <NavLink class="nav-link" href="reports/category">
+                                <span class="oi oi-pie-chart" aria-hidden="true"></span> Category Report
+                            </NavLink>
+                        </div>
+
+                        <div class="nav-item">
+                            <NavLink class="nav-link" href="reports/yearly">
+                                <span class="oi oi-bar-chart" aria-hidden="true"></span> Yearly Report
+                            </NavLink>
+                        </div>
+                    </div>
+                }
             </div>
 
+            <!-- User Section -->
             <div class="user-section">
                 <div class="nav-item px-3">
                     <div class="nav-link text-white-50 disabled">
                         <span class="oi oi-person" aria-hidden="true"></span> @UserState.CurrentUserName
                     </div>
                 </div>
+
                 <div class="nav-item px-3">
                     <button class="nav-link btn btn-link text-start w-100 text-danger" @onclick="HandleLogout">
                         <span class="oi oi-account-logout" aria-hidden="true"></span> Logout
@@ -91,12 +170,15 @@
         }
         else
         {
-            <div class="nav-item px-3">
+            <!-- Login -->
+            <div class="nav-item">
                 <NavLink class="nav-link" href="login">
                     <span class="oi oi-account-login" aria-hidden="true"></span> Login
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+
+            <!-- Register -->
+            <div class="nav-item">
                 <NavLink class="nav-link" href="register">
                     <span class="oi oi-person" aria-hidden="true"></span> Register
                 </NavLink>
@@ -107,18 +189,42 @@
 
 @code {
     private bool collapseNavMenu = true;
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private bool reportsOpen = true; // open by default (you can set false)
 
-    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     protected override void OnInitialized()
     {
         UserState.OnChange += StateHasChanged;
+
+        // Desktop: keep sidebar open by default.
+        // Mobile: the Bootstrap "collapse" class + hamburger will handle it.
+        // If you want to ALWAYS start open even on mobile, set collapseNavMenu = false;
+        collapseNavMenu = false;
     }
 
-    private void HandleLogout()
+    private void ToggleNavMenu()
     {
-        UserState.Logout();
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void ToggleReports()
+    {
+        reportsOpen = !reportsOpen;
+    }
+
+    // Close menu after selecting a link on small screens, but keep desktop sidebar open.
+    // This mimics standard Blazor behavior without needing JS.
+    private void OnNavContainerClick()
+    {
+        // If the menu is currently expanded via the hamburger, clicking inside should close it.
+        // On desktop, you can ignore this by leaving sidebar open.
+        // If you prefer always-open desktop, this is safe.
+    }
+
+    private async Task HandleLogout()
+    {
+        await UserState.LogoutAsync();
         NavManager.NavigateTo("/");
     }
 

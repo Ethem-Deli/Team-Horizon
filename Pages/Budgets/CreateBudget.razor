@@ -1,7 +1,14 @@
 @page "/budgets/create"
+
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Routing
+@using FamilyBudgetExpenseTracker.Data
 @using FamilyBudgetExpenseTracker.Models
 @using FamilyBudgetExpenseTracker.Services
+
+@attribute [Authorize]
+
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
 @inject NavigationManager Navigation
@@ -15,41 +22,47 @@
                 <div class="card-body p-4">
                     <h3 class="card-title mb-4">📊 Set New Budget</h3>
 
+                    @if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
+
                     <EditForm Model="@budget" OnValidSubmit="HandleSubmit">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger small" />
 
                         <div class="mb-3">
                             <label class="form-label">Month</label>
-                            <InputSelect @bind-Value="budget.Month" class="form-control">
+                            <InputSelect @bind-Value="budget.Month" class="form-control" disabled="@isSaving">
                                 @for (int i = 1; i <= 12; i++)
                                 {
                                     <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
                                 }
                             </InputSelect>
+                            <ValidationMessage For="@(() => budget.Month)" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Year</label>
-                            <InputNumber @bind-Value="budget.Year" class="form-control" />
+                            <InputNumber @bind-Value="budget.Year" class="form-control" disabled="@isSaving"
+                                         @attributes="yearInputAttrs" />
+                            <ValidationMessage For="@(() => budget.Year)" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Budget Amount ($)</label>
-                            <InputNumber @bind-Value="budget.Amount" class="form-control" placeholder="0.00" />
+                            <InputNumber @bind-Value="budget.Amount" class="form-control" placeholder="0.00"
+                                         disabled="@isSaving" @attributes="amountInputAttrs" />
                             <ValidationMessage For="@(() => budget.Amount)" />
                         </div>
-
-                        @if (!string.IsNullOrEmpty(errorMessage))
-                        {
-                            <div class="alert alert-danger">@errorMessage</div>
-                        }
 
                         <div class="d-flex gap-2 pt-3">
                             <button type="submit" class="btn btn-primary px-4" disabled="@isSaving">
                                 @(isSaving ? "Saving..." : "Save Budget")
                             </button>
-                            <a href="/budgets" class="btn btn-outline-secondary">Cancel</a>
+
+                            <!-- SPA navigation (no full reload) -->
+                            <NavLink href="/budgets" class="btn btn-outline-secondary">Cancel</NavLink>
                         </div>
                     </EditForm>
                 </div>
@@ -59,6 +72,20 @@
 </div>
 
 @code {
+    private readonly Dictionary<string, object> yearInputAttrs = new()
+    {
+        ["min"] = "2000",
+        ["max"] = "2100",
+        ["inputmode"] = "numeric"
+    };
+
+    private readonly Dictionary<string, object> amountInputAttrs = new()
+    {
+        ["min"] = "0.01",
+        ["step"] = "0.01",
+        ["inputmode"] = "decimal"
+    };
+
     private Budget budget = new Budget
     {
         Month = DateTime.Today.Month,
@@ -72,23 +99,34 @@
     private async Task HandleSubmit()
     {
         if (isSaving) return;
+
         isSaving = true;
         errorMessage = null;
 
+        // Must have a valid logged-in user.
+        if (UserState.CurrentUserId <= 0)
+        {
+            // SPA redirect (no forceLoad)
+            Navigation.NavigateTo("/account/login");
+            isSaving = false;
+            return;
+        }
+
         try
         {
-            // 1. Assign current user
+            // Always assign ownership from session
             budget.UserId = UserState.CurrentUserId;
 
-            // 2. Optional: Check if a budget already exists for this month/year
+            // Defense-in-depth
+            budget.Amount = decimal.Round(budget.Amount, 2);
+
             var existing = await DbContext.Budgets
                 .FirstOrDefaultAsync(b => b.UserId == budget.UserId
-                                     && b.Month == budget.Month
-                                     && b.Year == budget.Year);
+                                       && b.Month == budget.Month
+                                       && b.Year == budget.Year);
 
             if (existing != null)
             {
-                // Update existing instead of creating new
                 existing.Amount = budget.Amount;
                 DbContext.Budgets.Update(existing);
             }
@@ -99,14 +137,16 @@
 
             await DbContext.SaveChangesAsync();
 
-            // 3. Navigate away
+            // SPA navigation to list (no flicker)
             Navigation.NavigateTo("/budgets");
         }
-        catch (Exception ex)
+        catch
         {
             errorMessage = "Could not save budget. Ensure all fields are valid.";
+        }
+        finally
+        {
             isSaving = false;
-            Console.WriteLine($"Budget Error: {ex.Message}");
         }
     }
 }

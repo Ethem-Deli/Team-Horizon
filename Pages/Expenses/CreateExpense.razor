@@ -1,5 +1,9 @@
 @page "/expenses/create"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @using Microsoft.EntityFrameworkCore
+@using FamilyBudgetExpenseTracker.Data
 @using FamilyBudgetExpenseTracker.Models
 @using FamilyBudgetExpenseTracker.Services
 @inject ApplicationDbContext DbContext
@@ -12,6 +16,11 @@
             <div class="card shadow-sm">
                 <div class="card-body p-4">
                     <h3 class="card-title mb-4">➕ Add Expense</h3>
+
+                    @if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
 
                     @if (categories == null)
                     {
@@ -51,7 +60,7 @@
                             <div class="mb-3">
                                 <label class="form-label">Category</label>
                                 <InputSelect @bind-Value="expense.CategoryId" class="form-control">
-                                    <option value="">-- Select Category --</option>
+                                    <option value="0">-- Select Category --</option>
                                     @foreach (var cat in categories)
                                     {
                                         <option value="@cat.Id">@cat.Icon @cat.Name</option>
@@ -61,7 +70,9 @@
                             </div>
 
                             <div class="d-flex gap-2 pt-3">
-                                <button type="submit" class="btn btn-primary px-4">Save Expense</button>
+                                <button type="submit" class="btn btn-primary px-4" disabled="@saving">
+                                    @(saving ? "Saving..." : "Save Expense")
+                                </button>
                                 <a href="/expenses" class="btn btn-outline-secondary">Cancel</a>
                             </div>
                         </EditForm>
@@ -76,36 +87,93 @@
     private Expense expense = new() { Date = DateTime.Today };
     private List<Category>? categories;
 
+    private bool saving = false;
+    private string? errorMessage;
+
     protected override async Task OnInitializedAsync()
     {
-        // 1. Fetch categories specific to this user
-        categories = await DbContext.Categories
-            .Where(c => c.UserId == UserState.CurrentUserId)
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+        errorMessage = null;
 
-        // 2. Pre-select the first category if available
-        if (categories.Any())
+        // SECURITY: If there is no valid logged-in user, do not load any data.
+        if (UserState.CurrentUserId <= 0)
         {
-            expense.CategoryId = categories.First().Id;
+            NavManager.NavigateTo("/account/login");
+            return;
+        }
+
+        try
+        {
+            // SECURITY: Load ONLY categories that belong to the current user (user isolation).
+            categories = await DbContext.Categories
+                .AsNoTracking()
+                .Where(c => c.UserId == UserState.CurrentUserId)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            // Convenience: pre-select first category when available.
+            if (categories.Any())
+            {
+                expense.CategoryId = categories.First().Id;
+            }
+        }
+        catch
+        {
+            // Friendly error (do not expose DB details)
+            errorMessage = "Could not load categories. Please try again.";
+            categories = new List<Category>();
         }
     }
 
     private async Task HandleSubmit()
     {
-        try 
+        if (saving) return;
+
+        errorMessage = null;
+
+        // SECURITY: Must be logged in to create an expense.
+        if (UserState.CurrentUserId <= 0)
         {
-            // Ensure the UserId is set before saving
+            NavManager.NavigateTo("/account/login");
+            return;
+        }
+
+        saving = true;
+
+        try
+        {
+            // Defense-in-depth cleanup (DataAnnotations already validated the model)
+            expense.Amount = decimal.Round(expense.Amount, 2);
+            expense.Description = (expense.Description ?? string.Empty).Trim();
+
+            // SECURITY: Always assign UserId from the current session.
+            // Never accept UserId from the UI.
             expense.UserId = UserState.CurrentUserId;
+
+            // SECURITY: Optional guard: make sure selected category belongs to current user.
+            // This prevents creating an expense under another user's category.
+            var categoryOwnedByUser = await DbContext.Categories
+                .AsNoTracking()
+                .AnyAsync(c => c.Id == expense.CategoryId && c.UserId == UserState.CurrentUserId);
+
+            if (!categoryOwnedByUser)
+            {
+                errorMessage = "Invalid category selection. Please choose a valid category.";
+                return;
+            }
 
             DbContext.Expenses.Add(expense);
             await DbContext.SaveChangesAsync();
-            
+
             NavManager.NavigateTo("/expenses");
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error saving expense: {ex.Message}");
+            // Friendly error (do not expose exception/stack trace)
+            errorMessage = "Could not save expense. Please try again.";
+        }
+        finally
+        {
+            saving = false;
         }
     }
 }

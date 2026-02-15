@@ -1,13 +1,40 @@
 @page "/login"
+@using Microsoft.AspNetCore.WebUtilities
+
 @using FamilyBudgetExpenseTracker.Services
 @inject IAuthService AuthService
 @inject NavigationManager NavManager
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
+@code{
+    private bool isRegistered;
+
+    protected override void OnInitialized()
+    {
+        var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+
+        if (QueryHelpers.ParseQuery(uri.Query)
+            .TryGetValue("registered", out var value)
+            && value == "true")
+        {
+            isRegistered = true;
+        }
+    }
+
+}
+
+<div class="container py-5  min-vh-100">
+    <div class="row justify-content-center">        
+        <div class="col-md-4 offset-md-4">
             <div class="card shadow border-0 mt-5">
-                <div class="card-body p-4">
+                <div class="card-body p-4">             
+                    @if (isRegistered)
+                    {
+                        <div class="alert alert-success text-center mb-3">
+                             Registration successful! Please log in.
+                        </div>
+                    }
+
+       
                     <h2 class="text-center mb-4">Login</h2>
 
                     <div class="mb-3">

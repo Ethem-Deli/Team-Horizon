@@ -1,0 +1,248 @@
+@page "/budgets/edit/{Id:int}"
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
+@using FamilyBudgetExpenseTracker.Data
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
+
+@attribute [Authorize]
+
+@inject ApplicationDbContext DbContext
+@inject IBudgetService BudgetService
+@inject UserState UserState
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Edit Budget</PageTitle>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h3 class="card-title mb-0">✏️ Edit Budget</h3>
+                        <NavLink class="btn btn-outline-secondary btn-sm" href="/budgets">Back</NavLink>
+                    </div>
+
+                    @if (isLoading)
+                    {
+                        <p><em>Loading...</em></p>
+                    }
+                    else if (notFound)
+                    {
+                        <div class="alert alert-warning">
+                            Budget not found (or you don’t have access).
+                        </div>
+                        <NavLink class="btn btn-primary" href="/budgets">Go to Budgets</NavLink>
+                    }
+                    else
+                    {
+                        <EditForm Model="@budget" OnValidSubmit="HandleSubmit">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="text-danger small" />
+
+                            <div class="mb-3">
+                                <label class="form-label">Month</label>
+                                <InputSelect @bind-Value="budget!.Month" class="form-control" disabled="@isSaving">
+                                    @for (int i = 1; i <= 12; i++)
+                                    {
+                                        <option value="@i">@(new DateTime(2000, i, 1).ToString("MMMM"))</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => budget!.Month)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Year</label>
+                                <InputNumber @bind-Value="budget!.Year" class="form-control" disabled="@isSaving"
+                                             @attributes="yearInputAttrs" />
+                                <ValidationMessage For="@(() => budget!.Year)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Budget Amount ($)</label>
+                                <InputNumber @bind-Value="budget!.Amount" class="form-control" placeholder="0.00"
+                                             disabled="@isSaving" @attributes="amountInputAttrs" />
+                                <ValidationMessage For="@(() => budget!.Amount)" />
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(errorMessage))
+                            {
+                                <div class="alert alert-danger">@errorMessage</div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(successMessage))
+                            {
+                                <div class="alert alert-success">@successMessage</div>
+                            }
+
+                            <div class="d-flex gap-2 pt-2">
+                                <button type="submit" class="btn btn-primary px-4" disabled="@isSaving">
+                                    @(isSaving ? "Saving..." : "Save Changes")
+                                </button>
+
+                                <button type="button" class="btn btn-outline-danger ms-auto" disabled="@isSaving"
+                                        @onclick="ConfirmDelete">
+                                    🗑 Delete
+                                </button>
+                            </div>
+                        </EditForm>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private readonly Dictionary<string, object> yearInputAttrs = new()
+    {
+        ["min"] = "2000",
+        ["max"] = "2100",
+        ["inputmode"] = "numeric"
+    };
+
+    private readonly Dictionary<string, object> amountInputAttrs = new()
+    {
+        ["min"] = "0.01",
+        ["step"] = "0.01",
+        ["inputmode"] = "decimal"
+    };
+
+    private Budget? budget;
+    private bool isLoading = true;
+    private bool notFound = false;
+    private bool isSaving = false;
+
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserState.CurrentUserId <= 0)
+        {
+            Navigation.NavigateTo("/account/login");
+            return;
+        }
+
+        try
+        {
+            budget = await DbContext.Budgets
+                .AsTracking()
+                .FirstOrDefaultAsync(b => b.Id == Id && b.UserId == UserState.CurrentUserId);
+
+            if (budget == null)
+                notFound = true;
+        }
+        catch
+        {
+            notFound = true;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (isSaving || budget == null) return;
+
+        // Prevent cross-user updates if something was tampered
+        if (budget.UserId != UserState.CurrentUserId)
+        {
+            Navigation.NavigateTo("/budgets"); // no forceLoad
+            return;
+        }
+
+        isSaving = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            budget.Amount = decimal.Round(budget.Amount, 2);
+
+            var duplicate = await DbContext.Budgets
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b =>
+                    b.UserId == UserState.CurrentUserId &&
+                    b.Month == budget.Month &&
+                    b.Year == budget.Year &&
+                    b.Id != budget.Id);
+
+            if (duplicate != null)
+            {
+                errorMessage = "A budget already exists for that month and year. Please choose a different period.";
+                return;
+            }
+
+            budget.UserId = UserState.CurrentUserId;
+
+            var ok = await BudgetService.UpsertBudgetAsync(budget);
+            if (!ok)
+            {
+                errorMessage = "Could not update budget. Please try again.";
+                return;
+            }
+
+            successMessage = "Budget updated successfully.";
+            Navigation.NavigateTo("/budgets"); // no forceLoad
+        }
+        catch
+        {
+            errorMessage = "Could not update budget. Please check the fields and try again.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (budget == null || isSaving) return;
+
+        if (budget.UserId != UserState.CurrentUserId)
+        {
+            Navigation.NavigateTo("/budgets"); // no forceLoad
+            return;
+        }
+
+        var period = $"{new DateTime(2000, budget.Month, 1):MMMM} {budget.Year}";
+        var ok = await JS.InvokeAsync<bool>("confirm", $"Delete the budget for {period}? This cannot be undone.");
+
+        if (!ok) return;
+
+        isSaving = true;
+        errorMessage = null;
+
+        try
+        {
+            var deleted = await BudgetService.DeleteBudgetAsync(budget.Id, UserState.CurrentUserId);
+            if (!deleted)
+            {
+                errorMessage = "Could not delete budget (not found or access denied).";
+                return;
+            }
+
+            Navigation.NavigateTo("/budgets"); // no forceLoad
+        }
+        catch
+        {
+            errorMessage = "Could not delete budget. Please try again.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}

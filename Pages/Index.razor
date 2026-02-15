@@ -17,7 +17,7 @@
 @if (!UserState.IsAuthenticated)
 {
     @* --- FULL VIEW LANDING PAGE (Not Logged In) --- *@
-    <div class="container-fluid d-flex flex-column justify-content-center bg-white" style="min-height: 90vh;">
+    <div class="container-fluid justify-content-center bg-white min-vh-90">
 
         @* Hero Section *@
         <div class="container">
@@ -31,8 +31,8 @@
                         platform.
                     </p>
                     <div class="d-flex gap-3">
-                        <a href="/login" class="btn btn-primary btn-lg px-5 py-3 fw-bold shadow">Get Started Now</a>
-                        <a href="/register" class="btn btn-outline-dark btn-lg px-5 py-3 fw-bold">Create Account</a>
+                        <a href="/login" class="btn btn-primary btn-sm px-5 py-2 shadow fw-bold">Get Started Now</a>
+                        <a href="/register" class="btn btn-outline-dark btn-sm px-5 py-3 fw-bold">Create Account</a>
                     </div>
                 </div>
                 <div class="col-lg-6 d-none d-lg-flex justify-content-center">
@@ -45,21 +45,21 @@
             </div>
 
             @* Feature Snippet - Arranged in Row and Styled *@
-            <div class="row mt-5 pt-5 text-center border-top">
-                <div class="col-md-4 mb-4">
-                    <div class="p-4 h-100 rounded-3 hover-shadow transition">
+            <div class="row mt-5 pt-5 text-center border-top align-items-center">
+                <div class="col  mb-4">
+                    <div class="p-4 rounded-3 hover-shadow transition">
                         <h3 class="fw-bold mb-3">🔒 Secure</h3>
                         <p class="text-muted">Your financial data is encrypted and private to your account.</p>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="p-4 h-100 rounded-3 hover-shadow transition">
+                <div class="col  mb-4">
+                    <div class="p-4  rounded-3 hover-shadow transition">
                         <h3 class="fw-bold mb-3">📊 Visual</h3>
                         <p class="text-muted">Easy-to-read reports and progress bars to keep you on track.</p>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="p-4 h-100 rounded-3 hover-shadow transition">
+                <div class="col  mb-4">
+                    <div class="p-4 rounded-3 hover-shadow transition">
                         <h3 class="fw-bold mb-3">👨‍👩‍👧‍👦 Family First</h3>
                         <p class="text-muted">Designed for households to manage shared goals together.</p>
                     </div>
@@ -86,7 +86,7 @@ else
 
         <div class="row g-4">
             @* Summary Cards *@
-            <div class="col-md-3">
+            <div class="col">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -98,7 +98,7 @@ else
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -110,7 +110,7 @@ else
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -131,7 +131,7 @@ else
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -145,7 +145,7 @@ else
         </div>
 
         <div class="row mt-4 g-4">
-            <div class="col-lg-8">
+            <div class="col">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold">Recent Expenses</h5>
@@ -187,7 +187,7 @@ else
                 </div>
             </div>
 
-            <div class="col-lg-4">
+            <div class="col">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white py-3">
                         <h5 class="mb-0 fw-bold">Quick Actions</h5>
@@ -208,7 +208,12 @@ else
         </div>
     </div>
 }
-
+@* This button is to test the Error Handling: Gracefully handle errors without exposing sensitive information. 
+uncomment below line if you need to use it *@
+@* <button class="btn btn-danger" @onclick="ThrowTest">Throw Test Exception</button>
+@code {
+    void ThrowTest() => throw new Exception("TEST: unhandled exception");
+} *@
 @code {
     private decimal totalExpenses;
     private decimal monthlyBudget;
@@ -231,17 +236,31 @@ else
 
     private async Task LoadDashboardData()
     {
-        var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-        totalExpenses = await ExpenseSvc.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startOfMonth);
-        var budget = await BudgetSvc.GetBudgetForMonthAsync(UserState.CurrentUserId, DateTime.Today.Month, DateTime.Today.Year);
-        monthlyBudget = budget?.Amount ?? 0m;
+        try
+        {
+            var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 
-        percentLeft = monthlyBudget > 0m ? (int)Math.Max(0, Math.Min(100, Math.Round((1 - (totalExpenses / monthlyBudget)) *
-100m))) : 0;
+            totalExpenses = await ExpenseSvc.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startOfMonth);
 
-        categoryCount = await CategorySvc.GetCategoryCountAsync(UserState.CurrentUserId);
-        recentExpenses = await ExpenseSvc.GetRecentExpensesAsync(UserState.CurrentUserId);
+            var budget = await BudgetSvc.GetBudgetForMonthAsync(UserState.CurrentUserId, DateTime.Today.Year, DateTime.Today.Month);
+            monthlyBudget = budget?.Amount ?? 0m;
+
+            percentLeft = monthlyBudget > 0m
+                ? (int)Math.Max(0, Math.Min(100, Math.Round((1 - (totalExpenses / monthlyBudget)) * 100m)))
+                : 0;
+
+            categoryCount = await CategorySvc.GetCategoryCountAsync(UserState.CurrentUserId);
+            recentExpenses = await ExpenseSvc.GetRecentExpensesAsync(UserState.CurrentUserId);
+        }
+        catch
+        {
+            // keep it simple for assignment: prevent crash
+            totalExpenses = 0m;
+            monthlyBudget = 0m;
+            percentLeft = 0;
+            categoryCount = 0;
+            recentExpenses = new();
+        }
     }
-
     public void Dispose() => UserState.OnChange -= HandleStateChange;
 }

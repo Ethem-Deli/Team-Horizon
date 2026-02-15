@@ -1,7 +1,11 @@
 @page "/expenses"
 
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Components.Routing
+@using FamilyBudgetExpenseTracker.Data
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
 
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
@@ -12,6 +16,11 @@
 <div class="mb-3">
     <a href="/expenses/create" class="btn btn-primary">➕ Add New Expense</a>
 </div>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
 
 @if (expenses == null)
 {
@@ -25,75 +34,118 @@ else if (!expenses.Any())
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th>Amount</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @foreach (var expense in expenses)
-            {
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td>@expense.Date.ToString("MMM dd, yyyy")</td>
-                    <td>@expense.Description</td>
-                    <td>
-                        <span style="color: @(expense.Category?.ColorCode ?? "#000")">
-                            @(expense.Category?.Icon ?? "") @(expense.Category?.Name ?? "Uncategorized")
-                        </span>
-                    </td>
-                    <td><strong>$@expense.Amount.ToString("N2")</strong></td>
-                    <td>
-                        <a href="/expenses/edit/@expense.Id" class="btn btn-sm btn-warning">Edit</a>
-                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteExpense(expense.Id)">Delete</button>
-                        <a href="/expenses/details/@expense.Id" class="btn btn-sm btn-info">View</a>
-                    </td>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
+            </thead>
 
-        <tfoot>
-            <tr>
-                <td colspan="3"><strong>Total:</strong></td>
-                <td><strong>$@expenses.Sum(e => e.Amount).ToString("N2")</strong></td>
-                <td></td>
-            </tr>
-        </tfoot>
-    </table>
+            <tbody>
+                @foreach (var expense in expenses)
+                {
+                    <tr>
+                        <td>@expense.Date.ToString("MMM dd, yyyy")</td>
+                        <td>@expense.Description</td>
+                        <td>
+                            <span style="color: @(expense.Category?.ColorCode ?? "#000")">
+                                @(expense.Category?.Icon ?? "") @(expense.Category?.Name ?? "Uncategorized")
+                            </span>
+                        </td>
+                        <td><strong>$@expense.Amount.ToString("N2")</strong></td>
+                        <td>
+                            <a href="/expenses/edit/@expense.Id" class="btn btn-sm btn-warning">Edit</a>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteExpense(expense.Id)">Delete</button>
+                            <a href="/expenses/details/@expense.Id" class="btn btn-sm btn-info">View</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+            <tfoot>
+                <tr>
+                    <td colspan="3"><strong>Total:</strong></td>
+                    <td><strong>$@expenses.Sum(e => e.Amount).ToString("N2")</strong></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 }
 
 @code {
     private List<Expense>? expenses;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
+        // SECURITY: Must be logged in to view expense list.
+        if (UserState.CurrentUserId <= 0)
+        {
+            Navigation.NavigateTo("/account/login");
+            return;
+        }
+
         await LoadExpenses();
     }
 
     private async Task LoadExpenses()
     {
-        expenses = await DbContext.Expenses
-        .Include(e => e.Category)
-        .Where(e => e.UserId == UserState.CurrentUserId)
-        .OrderByDescending(e => e.Date)
-        .ToListAsync();
+        errorMessage = null;
+
+        try
+        {
+            // SECURITY: Load ONLY the current user's expenses.
+            expenses = await DbContext.Expenses
+                .AsNoTracking()
+                .Include(e => e.Category)
+                .Where(e => e.UserId == UserState.CurrentUserId)
+                .OrderByDescending(e => e.Date)
+                .ToListAsync();
+        }
+        catch
+        {
+            // Friendly error (do not expose exception details)
+            errorMessage = "Could not load expenses. Please refresh and try again.";
+            expenses = new List<Expense>();
+        }
     }
 
     private async Task DeleteExpense(int id)
     {
-        var expense = await DbContext.Expenses
-        .FirstOrDefaultAsync(e => e.Id == id && e.UserId == UserState.CurrentUserId);
+        errorMessage = null;
 
-        if (expense != null)
+        // SECURITY: Must be logged in to delete.
+        if (UserState.CurrentUserId <= 0)
         {
-            DbContext.Expenses.Remove(expense);
-            await DbContext.SaveChangesAsync();
-            await LoadExpenses();
+            Navigation.NavigateTo("/account/login");
+            return;
+        }
+
+        try
+        {
+            // SECURITY: Delete ONLY if the expense belongs to the current user (Id + UserId).
+            var expense = await DbContext.Expenses
+                .FirstOrDefaultAsync(e => e.Id == id && e.UserId == UserState.CurrentUserId);
+
+            if (expense != null)
+            {
+                DbContext.Expenses.Remove(expense);
+                await DbContext.SaveChangesAsync();
+
+                // Reload the list to reflect deletion
+                await LoadExpenses();
+            }
+        }
+        catch
+        {
+            // Friendly error
+            errorMessage = "Could not delete expense. Please try again.";
         }
     }
 }

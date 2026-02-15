@@ -1,0 +1,11 @@
+@using FamilyBudgetExpenseTracker.Services
+@inject UserState UserState
+
+@if (UserState.IsAuthenticated)
+{
+    <span>👤 @UserState.CurrentUserName</span>
+}
+else
+{
+    <span class="text-muted">Guest</span>
+}

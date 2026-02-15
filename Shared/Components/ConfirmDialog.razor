@@ -1,0 +1,22 @@
+@inject Microsoft.JSInterop.IJSRuntime JS
+
+<button class="btn @ButtonClass" type="button" @onclick="Confirm">
+    @ChildContent
+</button>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string Message { get; set; } = "Are you sure?";
+    [Parameter] public string ButtonClass { get; set; } = "btn-outline-danger";
+    [Parameter] public EventCallback OnConfirmed { get; set; }
+
+    private async Task Confirm()
+    {
+        // Use the object-array overload for broad .NET compatibility.
+        var ok = await JS.InvokeAsync<bool>("confirm", new object?[] { Message });
+        if (ok)
+        {
+            await OnConfirmed.InvokeAsync();
+        }
+    }
+}

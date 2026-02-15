@@ -1,0 +1,165 @@
+@page "/reports/trends"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
+@using FamilyBudgetExpenseTracker.Data
+@using FamilyBudgetExpenseTracker.Services
+
+@inject ApplicationDbContext DbContext
+@inject UserState UserState
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Spending Trends</PageTitle>
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="m-0">📊 Spending Trends</h2>
+        <NavLink href="/reports/yearly" class="btn btn-outline-secondary btn-sm">Yearly</NavLink>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">From</label>
+                    <InputDate @bind-Value="from" class="form-control" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">To</label>
+                    <InputDate @bind-Value="to" class="form-control" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <button class="btn btn-primary w-100" @onclick="Load" disabled="@loading">
+                        @if (loading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Loading...</span>
+                        }
+                        else
+                        {
+                            <span>Load</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!loaded)
+    {
+        <div class="alert alert-info">Choose a date range and click <strong>Load</strong>.</div>
+    }
+    else if (total <= 0m)
+    {
+        <div class="alert alert-warning">No expenses found in the selected range.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="m-0">Monthly Totals</h5>
+                    <span class="badge bg-dark">Total: $@total.ToString("N2")</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trendsBar"></canvas>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private DateTime from = DateTime.Today.AddMonths(-5);
+    private DateTime to = DateTime.Today;
+
+    private bool loading;
+    private bool loaded;
+    private bool _pendingChart;
+
+    private string? errorMessage;
+    private decimal total;
+
+    private List<string> labels = new();
+    private List<double> values = new();
+
+    private async Task Load()
+    {
+        errorMessage = null;
+        loaded = false;
+        total = 0m;
+        labels.Clear();
+        values.Clear();
+
+        if (UserState.CurrentUserId <= 0)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        if (to < from)
+        {
+            errorMessage = "The 'To' date must be after the 'From' date.";
+            return;
+        }
+
+        loading = true;
+
+        try
+        {
+            var start = new DateTime(from.Year, from.Month, 1);
+            var endExclusive = new DateTime(to.Year, to.Month, 1).AddMonths(1);
+
+            var expenses = await DbContext.Expenses
+                .AsNoTracking()
+                .Where(e => e.UserId == UserState.CurrentUserId)
+                .Where(e => e.Date >= start && e.Date < endExclusive)
+                .ToListAsync();
+
+            total = expenses.Sum(e => e.Amount);
+
+            var byMonth = expenses
+                .GroupBy(e => new { e.Date.Year, e.Date.Month })
+                .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(x => x.Amount) })
+                .ToList();
+
+            foreach (var row in byMonth)
+            {
+                labels.Add(new DateTime(row.Year, row.Month, 1).ToString("MMM yy"));
+                values.Add(Convert.ToDouble(decimal.Round(row.Total, 2)));
+            }
+
+            loaded = true;
+            _pendingChart = true;
+        }
+        catch
+        {
+            errorMessage = "Could not load trends. Please try again.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_pendingChart) return;
+        _pendingChart = false;
+
+        if (labels.Count > 0)
+        {
+            await JS.InvokeVoidAsync("budgetCharts.renderBar", "trendsBar", labels, values);
+        }
+    }
+}

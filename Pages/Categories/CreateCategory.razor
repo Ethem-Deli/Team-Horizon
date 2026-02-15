@@ -1,4 +1,12 @@
 @page "/categories/create"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using Microsoft.EntityFrameworkCore
+@using FamilyBudgetExpenseTracker.Data
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
+
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
 @inject NavigationManager Navigation
@@ -7,42 +15,103 @@
 
 <h1>➕ Add New Category</h1>
 
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
 <EditForm Model="@category" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger small" />
+
     <div class="mb-3">
         <label>Name:</label>
         <InputText @bind-Value="category.Name" class="form-control" />
+        <ValidationMessage For="@(() => category.Name)" />
     </div>
 
     <div class="mb-3">
         <label>Description:</label>
         <InputText @bind-Value="category.Description" class="form-control" />
+        <ValidationMessage For="@(() => category.Description)" />
     </div>
 
     <div class="mb-3">
         <label>Icon:</label>
         <InputText @bind-Value="category.Icon" class="form-control" placeholder="e.g., 🛒" />
         <small class="text-muted">Use an emoji</small>
+        <ValidationMessage For="@(() => category.Icon)" />
     </div>
 
     <div class="mb-3">
         <label>Color:</label>
         <input type="color" @bind="category.ColorCode" class="form-control" />
+        <ValidationMessage For="@(() => category.ColorCode)" />
     </div>
 
     <div>
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn btn-primary" disabled="@saving">
+            @(saving ? "Saving..." : "Save")
+        </button>
         <a href="/categories" class="btn btn-secondary">Cancel</a>
     </div>
 </EditForm>
 
 @code {
     private Category category = new Category();
+    private bool saving = false;
+    private string? errorMessage;
 
     private async Task HandleSubmit()
     {
-        category.UserId = UserState.CurrentUserId;
-        DbContext.Categories.Add(category);
-        await DbContext.SaveChangesAsync();
-        Navigation.NavigateTo("/categories");
+        if (saving) return;
+        saving = true;
+        errorMessage = null;
+
+        // SECURITY: Must be logged in to create a category.
+        if (UserState.CurrentUserId <= 0)
+        {
+            Navigation.NavigateTo("/account/login");
+            saving = false;
+            return;
+        }
+
+        try
+        {
+            // SECURITY: Always assign ownership from session (never trust UI/client).
+            category.UserId = UserState.CurrentUserId;
+
+            // Input cleanup (defense-in-depth)
+            category.Name = (category.Name ?? string.Empty).Trim();
+            category.Description = string.IsNullOrWhiteSpace(category.Description) ? null : category.Description.Trim();
+            category.Icon = string.IsNullOrWhiteSpace(category.Icon) ? "📁" : category.Icon.Trim();
+            category.ColorCode = string.IsNullOrWhiteSpace(category.ColorCode) ? "#3498db" : category.ColorCode.Trim();
+
+            // Prevent duplicate category names per user (case-insensitive)
+            var normalized = category.Name.ToLowerInvariant();
+            var exists = await DbContext.Categories
+                .AsNoTracking()
+                .AnyAsync(c => c.UserId == category.UserId && c.Name.ToLower() == normalized);
+
+            if (exists)
+            {
+                errorMessage = "A category with this name already exists. Please choose a different name.";
+                return;
+            }
+
+            DbContext.Categories.Add(category);
+            await DbContext.SaveChangesAsync();
+
+            Navigation.NavigateTo("/categories");
+        }
+        catch
+        {
+            // Friendly error; do not expose DB details.
+            errorMessage = "Could not save category. Please try again.";
+        }
+        finally
+        {
+            saving = false;
+        }
     }
 }

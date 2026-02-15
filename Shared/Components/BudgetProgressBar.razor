@@ -1,0 +1,18 @@
+<div class="progress" style="height:@HeightCss" aria-label="Budget usage">
+    <div class="progress-bar" role="progressbar" style="width:@WidthCss" aria-valuenow="@Percent" aria-valuemin="0"
+         aria-valuemax="100">
+        @if (ShowLabel)
+        {
+            <span class="small">@Percent.ToString("N0")%</span>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public decimal Percent { get; set; }
+    [Parameter] public int HeightPx { get; set; } = 10;
+    [Parameter] public bool ShowLabel { get; set; }
+
+    private string HeightCss => $"{HeightPx}px";
+    private string WidthCss => $"{Math.Clamp((double)Percent, 0, 100)}%";
+}

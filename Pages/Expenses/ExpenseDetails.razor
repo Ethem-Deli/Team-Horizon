@@ -1,7 +1,12 @@
 @page "/expenses/details/{Id:int}"
 
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @using Microsoft.AspNetCore.Components
 @using Microsoft.EntityFrameworkCore
+@using FamilyBudgetExpenseTracker.Data
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
 
 @inject ApplicationDbContext DbContext
 @inject UserState UserState
@@ -14,7 +19,7 @@
 else if (expense == null)
 {
     <div class="alert alert-warning">
-        Expense not found.
+        Expense not found (or you don’t have permission to view it).
     </div>
 
     <a href="/expenses" class="btn btn-secondary">Back</a>
@@ -55,10 +60,29 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        expense = await DbContext.Expenses
-        .Include(e => e.Category)
-        .FirstOrDefaultAsync(e => e.Id == Id && e.UserId == UserState.CurrentUserId);
+        // SECURITY: Must be logged in to view details.
+        if (UserState.CurrentUserId <= 0)
+        {
+            Navigation.NavigateTo("/account/login");
+            return;
+        }
 
-        loading = false;
+        try
+        {
+            // SECURITY: Fetch by Id + UserId to prevent viewing another user's expense.
+            expense = await DbContext.Expenses
+                .AsNoTracking()
+                .Include(e => e.Category)
+                .FirstOrDefaultAsync(e => e.Id == Id && e.UserId == UserState.CurrentUserId);
+        }
+        catch
+        {
+            // Friendly fallback (no sensitive details)
+            expense = null;
+        }
+        finally
+        {
+            loading = false;
+        }
     }
 }

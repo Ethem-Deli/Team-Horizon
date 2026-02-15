@@ -374,5 +374,7 @@ to restore packages
 dotnet resRebuild the project
 
 Rebuild the project
-dotnet build
+dotnet build FamilyBudgetExpenseTracker.csproj
 
+Run the app 
+dotnet run --project FamilyBudgetExpenseTracker.csproj

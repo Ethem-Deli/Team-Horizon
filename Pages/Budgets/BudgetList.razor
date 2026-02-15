@@ -1,52 +1,56 @@
 @page "/budgets"
-@using Microsoft.EntityFrameworkCore
-@inject ApplicationDbContext DbContext
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@using FamilyBudgetExpenseTracker.Models
+@using FamilyBudgetExpenseTracker.Services
+
+@attribute [Authorize]
+
 @inject IBudgetService BudgetService
 @inject IExpenseService ExpenseService
 @inject UserState UserState
+<<<<<<< HEAD
 @inject NavigationManager Nav
 
 private void GoToOverview(Budget budget)
 {
     Nav.NavigateTo($"/budgets/overview/{budget.Year}/{budget.Month}");
 }
+=======
+@inject NavigationManager Navigation
+>>>>>>> ada4d43f8c56324d0bbbbca3d18025ae63c3f6e5
 
 <PageTitle>Budgets</PageTitle>
 
 <h1>📊 Budgets</h1>
 
-<div class="mb-3">
-    <a href="/budgets/create" class="btn btn-primary">➕ Set New Budget</a>
+<div class="mb-3 d-flex gap-2">
+    <NavLink href="/budgets/create" class="btn btn-primary">➕ Set New Budget</NavLink>
+    <NavLink href="/budgets/overview" class="btn btn-outline-secondary">📈 Overview</NavLink>
 </div>
 
-@if (budgets == null)
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@if (loading)
 {
     <p><em>Loading...</em></p>
 }
-else if (!budgets.Any())
+else if (budgets == null || !budgets.Any())
 {
-    <p>No budgets set. <a href="/budgets/create">Create your first budget</a></p>
+    <p>No budgets set. <NavLink href="/budgets/create">Create your first budget</NavLink>
+    </p>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Period</th>
-                <th>Budget Amount</th>
-                <th>Actual Spent</th>
-                <th>Remaining</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var budget in budgets)
-            {
-                var spent = GetSpentAmount(budget);
-                var remaining = budget.Amount - spent;
-                var percentage = (spent / budget.Amount) * 100;
-
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
                 <tr>
+<<<<<<< HEAD
                     <td>@GetMonthName(budget.Month) @budget.Year</td>
                     <td>$@budget.Amount.ToString("N2")</td>
                     <td>$@spent.ToString("N2")</td>
@@ -71,40 +75,104 @@ else
                             View
                         </button>
                     </td>
+=======
+                    <th>Period</th>
+                    <th>Budget Amount</th>
+                    <th>Actual Spent</th>
+                    <th>Remaining</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+>>>>>>> ada4d43f8c56324d0bbbbca3d18025ae63c3f6e5
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var budget in budgets)
+                {
+                    var spent = GetSpentAmount(budget);
+                    var remaining = budget.Amount - spent;
+
+                    var percentage = budget.Amount <= 0 ? 0 : (spent / budget.Amount) * 100;
+
+                    <tr>
+                        <td>@GetMonthName(budget.Month) @budget.Year</td>
+                        <td>$@budget.Amount.ToString("N2")</td>
+                        <td>$@spent.ToString("N2")</td>
+                        <td>$@remaining.ToString("N2")</td>
+                        <td>
+                            @if (percentage < 80)
+                            {
+                                <span class="badge bg-success">On Track</span>
+                            }
+                            else if (percentage < 100)
+                            {
+                                <span class="badge bg-warning">Warning</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Over Budget</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <NavLink class="btn btn-sm btn-outline-primary" href="@($"/budgets/edit/{budget.Id}")">
+                                ✏️ Edit
+                            </NavLink>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
 @code {
     private List<Budget>? budgets;
     private Dictionary<int, decimal> spentAmounts = new();
 
+    private bool loading = true;
+    private string? errorMessage;
+
     protected override async Task OnInitializedAsync()
     {
+        errorMessage = null;
 
-        budgets = await BudgetService.GetUserBudgetsAsync(UserState.CurrentUserId);
-
-        // Calculate spent amounts
-        foreach (var budget in budgets)
+        if (UserState.CurrentUserId <= 0)
         {
-            var startDate = new DateTime(budget.Year, budget.Month, 1);
-            var endDate = startDate.AddMonths(1);
+            Navigation.NavigateTo("/account/login");
+            return;
+        }
 
+<<<<<<< HEAD
             var spent1 = await ExpenseService.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startDate);
             @* var spent = spent1.Sum(e => e.Amount); *@
             spentAmounts[budget.Id] = spent1;
+=======
+        try
+        {
+            budgets = await BudgetService.GetUserBudgetsAsync(UserState.CurrentUserId);
+
+            spentAmounts.Clear();
+
+            foreach (var budget in budgets)
+            {
+                var startDate = new DateTime(budget.Year, budget.Month, 1);
+                var totalSpent = await ExpenseService.GetTotalExpensesForMonthAsync(UserState.CurrentUserId, startDate);
+                spentAmounts[budget.Id] = totalSpent;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+>>>>>>> ada4d43f8c56324d0bbbbca3d18025ae63c3f6e5
         }
     }
 
     private decimal GetSpentAmount(Budget budget)
-    {
-        return spentAmounts.GetValueOrDefault(budget.Id, 0);
-    }
+        => spentAmounts.GetValueOrDefault(budget.Id, 0);
 
     private string GetMonthName(int month)
-    {
-        return new DateTime(2000, month, 1).ToString("MMMM");
-    }
+        => new DateTime(2000, month, 1).ToString("MMMM");
 }
